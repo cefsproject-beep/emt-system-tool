@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #6c9bcf;
+            --accent: #7ba7d9;
+            --success: #6cceb6;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --card-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #a8c0ff 0%, #3f4c6b 100%);
+            color: var(--dark);
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1000px;
+            min-height: 550px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .welcome-section {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/></svg>');
+            opacity: 0.3;
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 2;
+            max-width: 400px;
+        }
+
+        .welcome-content h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-content p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            opacity: 0.9;
+        }
+
+        .features {
+            list-style: none;
+            margin-top: 25px;
+        }
+
+        .features li {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .features i {
+            margin-right: 10px;
+            color: var(--success);
+            font-size: 16px;
+        }
+
+        .login-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px;
+            background: white;
+        }
+
+        .login-container {
+            max-width: 350px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .login-header {
+            margin-bottom: 35px;
+            text-align: center;
+        }
+
+        .login-header h2 {
+            font-size: 28px;
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            color: var(--gray);
+            font-size: 15px;
+        }
+
+        .form-container {
+            border: 1px solid var(--light-gray);
+            border-radius: 15px;
+            padding: 30px;
+            background: #fff;
+            box-shadow: var(--card-shadow);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--light-gray);
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 111, 165, 0.3);
+        }
+
+        .submit-btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .guest-btn {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        .guest-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 111, 165, 0.2);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            color: var(--gray);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            margin: 0 5px;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin: 10px 0;
+            display: none;
+            font-size: 14px;
+            padding: 10px;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .success-message {
+            color: var(--success);
+            text-align: center;
+            margin: 10px 0;
+            display: none;
+            font-size: 14px;
+            padding: 10px;
+            background: rgba(108, 206, 182, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--success);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                max-width: 900px;
+            }
+            
+            .welcome-content h1 {
+                font-size: 32px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+                align-items: flex-start;
+            }
+            
+            .container {
+                flex-direction: column;
+                min-height: auto;
+                max-width: 500px;
+            }
+            
+            .welcome-section {
+                padding: 30px 25px;
+                text-align: center;
+                min-height: 250px;
+            }
+            
+            .welcome-content {
+                max-width: 100%;
+            }
+            
+            .welcome-content h1 {
+                font-size: 28px;
+                margin-bottom: 15px;
+            }
+            
+            .welcome-content p {
+                font-size: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .features {
+                margin-top: 20px;
+            }
+            
+            .features li {
+                margin-bottom: 10px;
+                justify-content: center;
+            }
+            
+            .login-section {
+                padding: 30px 25px;
+            }
+            
+            .login-container {
+                max-width: 100%;
+            }
+            
+            .login-header h2 {
+                font-size: 24px;
+            }
+            
+            .input-group input,
+            .input-group select {
+                padding: 12px;
+            }
+            
+            .form-container {
+                padding: 25px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 15px;
+            }
+            
+            .welcome-section {
+                padding: 25px 20px;
+                min-height: 220px;
+            }
+            
+            .welcome-content h1 {
+                font-size: 24px;
+            }
+            
+            .welcome-content p {
+                font-size: 14px;
+            }
+            
+            .login-section {
+                padding: 25px 20px;
+            }
+            
+            .login-header {
+                margin-bottom: 25px;
+            }
+            
+            .login-header h2 {
+                font-size: 22px;
+            }
+            
+            .login-header p {
+                font-size: 14px;
+            }
+            
+            .input-group {
+                margin-bottom: 18px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+            
+            .footer {
+                margin-top: 20px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                max-width: 95%;
+            }
+            
+            .welcome-section,
+            .login-section {
+                padding: 35px;
+            }
+        }
+
+        /* Fix untuk landscape mobile */
+        @media (max-height: 600px) and (orientation: landscape) {
+            body {
+                padding: 10px;
+                align-items: flex-start;
+            }
+            
+            .container {
+                min-height: auto;
+                margin: 10px auto;
+            }
+            
+            .welcome-section {
+                padding: 20px;
+            }
+            
+            .login-section {
+                padding: 20px;
+            }
+            
+            .welcome-content h1 {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
+            
+            .welcome-content p {
+                font-size: 13px;
+                margin-bottom: 15px;
+            }
+            
+            .features {
+                margin-top: 15px;
+            }
+            
+            .features li {
+                margin-bottom: 8px;
+                font-size: 13px;
+            }
+        }
+
+        /* Fix untuk input di iOS */
+        @media screen and (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+     <script src="app.js"></script>
+    <div class="container">
+        <!-- Welcome Section (Left) -->
+        <section class="welcome-section">
+            <div class="welcome-content">
+                <h1>EMT Tool</h1>
+                <p>Emergency Management Team System - Your comprehensive solution for coordinating emergency response operations and managing resources efficiently.</p>
+                
+            </div>
+        </section>
+
+        <!-- Login Section (Right) -->
+        <section class="login-section">
+            <div class="login-container">
+                <div class="login-header">
+                    <h2>Sign In</h2>
+                    <p>Enter details to access the Emergency Management System</p>
+                </div>
+
+                <div class="form-container">
+                    <form id="signinForm">
+                        <div class="input-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" placeholder="Enter your name" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="position">Position</label>
+                            <input type="text" id="position" placeholder="Enter your position" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="emtRole">EMT Role</label>
+                            <select id="emtRole" required>
+                                <option value="">Select EMT Role</option>
+                                <option value="Human Resource">Human Resource (HR)</option>
+                                <option value="Safety Officer">Safety Officer</option>
+                                <option value="Incident Commander">Incident Commander</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Logistic">Logistic</option>
+                                <option value="Operation Section Chief">Operation Section Chief</option>
+                                <option value="Planning">Planning</option>
+                                <option value="Historian">Historian</option>
+                                <option value="Staging Point">Staging Point</option>
+                                <option value="Staging Area">Staging Area</option>
+                                <option value="Liason Officer">Liason Officer</option>
+                            </select>
+                        </div>
+
+                        <div class="error-message" id="errorMessage"></div>
+                        <div class="success-message" id="successMessage"></div>
+                        
+                        <div class="loading" id="loading">
+                            <div class="loading-spinner"></div>
+                            <p>Signing in...</p>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="signinBtn">
+                            Sign In
+                        </button>
+                    </form>
+
+                    <button class="guest-btn" onclick="enterAsGuest()" id="guestBtn">
+                        Continue as Guest
+                    </button>
+                </div>
+
+                <div class="footer">
+                    <p>© EMT Tool 2025 - <a href="#">Privacy Policy</a> - <a href="#">Terms of Service</a></p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Function untuk Sign In
+        window.signInUser = async function() {
+            const name = document.getElementById('name').value.trim();
+            const position = document.getElementById('position').value.trim();
+            const emtRole = document.getElementById('emtRole').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const loading = document.getElementById('loading');
+            const signinBtn = document.getElementById('signinBtn');
+
+            // Validation
+            if (!name) {
+                showError('Please enter your name');
+                document.getElementById('name').focus();
+                return false;
+            }
+            
+            if (!position) {
+                showError('Please enter your position');
+                document.getElementById('position').focus();
+                return false;
+            }
+            
+            if (!emtRole) {
+                showError('Please select your EMT Role');
+                document.getElementById('emtRole').focus();
+                return false;
+            }
+
+            // Show loading
+            loading.style.display = 'block';
+            signinBtn.disabled = true;
+            signinBtn.textContent = 'Signing In...';
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+
+            try {
+                console.log('Creating user profile:', { name, position, emtRole });
+                
+                // Generate unique user ID
+                const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
+                // Save user data ke Local Storage
+                localStorage.setItem('emtUserData', JSON.stringify({
+                    userId: userId,
+                    name: name,
+                    position: position,
+                    emtRole: emtRole,
+                    signedIn: true,
+                    signInTime: new Date().toISOString()
+                }));
+
+                console.log('✅ User data saved to local storage');
+
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Show success message
+                showSuccess('Sign in successful! Redirecting...');
+                
+                // Redirect ke dashboard setelah delay
+                setTimeout(() => {
+                    window.location.href = 'admin-dashboard.html';
+                }, 1000);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                showError('Sign in failed. Please try again.');
+                return false;
+            } finally {
+                loading.style.display = 'none';
+                signinBtn.disabled = false;
+                signinBtn.textContent = 'Sign In';
+            }
+        };
+
+        // Function untuk Guest
+        window.enterAsGuest = function() {
+            const guestBtn = document.getElementById('guestBtn');
+            guestBtn.disabled = true;
+            guestBtn.textContent = 'Entering...';
+            
+            // Save guest data ke Local Storage
+            localStorage.setItem('emtUserData', JSON.stringify({
+                userId: 'guest_' + Date.now(),
+                name: 'Guest User',
+                position: 'Guest',
+                emtRole: 'Viewer',
+                signedIn: false,
+                isGuest: true,
+                signInTime: new Date().toISOString()
+            }));
+            
+            console.log('✅ Guest access granted');
+            
+            // Show success message
+            showSuccess('Entering as guest...');
+            
+            // Redirect ke dashboard setelah delay
+            setTimeout(() => {
+                window.location.href = 'dashboard-public.html';
+            }, 1000);
+        }
+
+        // Function show error
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+            
+            // Auto hide error after 5 seconds
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // Function show success
+        function showSuccess(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        // Form submission handler
+        document.getElementById('signinForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form from submitting traditionally
+            signInUser();
+        });
+
+        // Enter key support untuk seluruh form
+        document.getElementById('signinForm').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                signInUser();
+            }
+        });
+
+        // Auto-focus pada name field
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('name').focus();
+            
+            // Check URL parameters untuk logout
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
+            
+            if (action === 'logout') {
+                // Clear user data
+                localStorage.removeItem('emtUserData');
+                showSuccess('You have been logged out successfully.');
+                
+                // Remove logout parameter from URL tanpa reload
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+                return;
+            }
+            
+            // TIDAK ADA AUTO-REDIRECT LAGI
+            // User mesti tekan button Sign In atau Guest secara manual
+        });
+
+        // Real-time validation
+        document.getElementById('name').addEventListener('input', function() {
+            document.getElementById('errorMessage').style.display = 'none';
+        });
+        
+        document.getElementById('position').addEventListener('input', function() {
+            document.getElementById('errorMessage').style.display = 'none';
+        });
+        
+        document.getElementById('emtRole').addEventListener('change', function() {
+            document.getElementById('errorMessage').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

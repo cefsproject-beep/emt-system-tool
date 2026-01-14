@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #6c9bcf;
+            --accent: #7ba7d9;
+            --success: #6cceb6;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --card-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #a8c0ff 0%, #3f4c6b 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-attachment: fixed;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .circle-1 {
+            width: 100px;
+            height: 100px;
+            top: 15%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .circle-2 {
+            width: 150px;
+            height: 150px;
+            top: 65%;
+            right: 8%;
+            animation-delay: 2s;
+        }
+
+        .circle-3 {
+            width: 80px;
+            height: 80px;
+            bottom: 25%;
+            left: 15%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-25px) rotate(180deg);
+                opacity: 0.3;
+            }
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 18px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--dark);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            background-clip: padding-box;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transition: left 0.3s ease;
+            z-index: -1;
+            background-clip: padding-box;
+        }
+
+        .nav-links a.active {
+            color: white;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
+
+        .nav-links a.active::before {
+            left: 0;
+        }
+
+        .nav-links a:hover:not(.active) {
+            background-color: rgba(74, 111, 165, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: rgba(74, 111, 165, 0.1);
+            border-radius: 25px;
+            border: 1px solid rgba(74, 111, 165, 0.2);
+            background-clip: padding-box;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(74, 111, 165, 0.3);
+            background-clip: padding-box;
+        }
+
+        .admin-avatar {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 40px 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: white;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Back Navigation */
+        .back-nav {
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary);
+            border: 2px solid rgba(74, 111, 165, 0.2);
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
+
+        /* Incident Container - NEW LAYOUT */
+        .incident-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideInUp 0.8s ease-out;
+            background-clip: padding-box;
+            border-left: 5px solid var(--accent);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark);
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .section-title i {
+            color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--primary);
+        }
+
+        /* Boxes Grid Layout */
+        .boxes-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .boxes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Box Styling */
+        .info-box {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(74, 111, 165, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-box:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+            border-color: var(--accent);
+        }
+
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(74, 111, 165, 0.1);
+        }
+
+        .box-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .box-title i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .manage-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(74, 111, 165, 0.2);
+        }
+
+        .manage-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+        }
+
+        /* Info Grid Inside Box */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            flex-grow: 1;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 12px 15px;
+            background: rgba(74, 111, 165, 0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(74, 111, 165, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .info-row:hover {
+            background: rgba(74, 111, 165, 0.07);
+            border-color: rgba(74, 111, 165, 0.1);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.9rem;
+            min-width: 140px;
+        }
+
+        .info-value {
+            flex: 1;
+            color: var(--dark);
+            font-weight: 500;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .info-value.empty {
+            color: var(--gray);
+            font-style: italic;
+        }
+
+        /* Status Badges - REMOVED from HTML but keep CSS */
+        .status-badge {
+            display: none;
+        }
+
+        /* Loading State */
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .loading-spinner {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .loading-state p {
+            font-size: 1.1rem;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .loading-small {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--primary);
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #fff5f5;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            border: 2px solid #ffcccc;
+        }
+
+        .error-icon {
+            font-size: 3rem;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        .error-state h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+
+        .error-state p {
+            color: var(--gray);
+            margin-bottom: 30px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            padding-top: 30px;
+            border-top: 2px solid rgba(74, 111, 165, 0.1);
+            margin-top: 20px;
+        }
+
+        .download-btn {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #ed5565 0%, #da4453 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 20px rgba(237, 85, 101, 0.3);
+        }
+
+        .download-btn:hover {
+            background: linear-gradient(135deg, #da4453 0%, #c33443 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(237, 85, 101, 0.4);
+        }
+
+        /* Timeline Styling */
+        .timeline-content {
+            margin-top: 20px;
+        }
+
+        .timeline-item {
+            background: rgba(74, 111, 165, 0.03);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(74, 111, 165, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:hover {
+            background: rgba(74, 111, 165, 0.07);
+            border-color: rgba(74, 111, 165, 0.2);
+        }
+
+        .timeline-time {
+            font-size: 0.85rem;
+            color: #e74c3c;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .timeline-title {
+            font-size: 1rem;
+            color: var(--dark);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .timeline-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .timeline-location {
+            font-size: 0.85rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+
+        /* IP Status and PEAR Items */
+        .ip-status-item,
+        .pear-item {
+            background: rgba(74, 111, 165, 0.03);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(74, 111, 165, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .ip-status-item:hover,
+        .pear-item:hover {
+            background: rgba(74, 111, 165, 0.07);
+            border-color: rgba(74, 111, 165, 0.2);
+        }
+
+        .status-badge-small {
+            display: inline-block;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .ip-id-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            background: rgba(74, 111, 165, 0.1);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--dark);
+            border: 1px solid rgba(74, 111, 165, 0.2);
+        }
+
+        /* No Data Message */
+        .no-data-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+        }
+
+        .no-data-message i {
+            font-size: 2rem;
+            color: #bdc3c7;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .no-data-message p {
+            margin: 0 0 10px 0;
+            font-weight: 500;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .boxes-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .back-btn, .download-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .info-box {
+                padding: 20px;
+            }
+            
+            .info-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .info-label {
+                min-width: auto;
+                width: 100%;
+            }
+            
+            .info-value {
+                text-align: left;
+                width: 100%;
+            }
+            
+            .box-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .manage-btn {
+                align-self: flex-start;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 20px 15px;
+            }
+            
+            .incident-container {
+                padding: 20px;
+                border-radius: 15px;
+            }
+            
+            .page-title {
+                font-size: 1.8rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .box-title {
+                font-size: 1.1rem;
+            }
+            
+            .manage-btn {
+                padding: 8px 15px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="floating-circle circle-1"></div>
+        <div class="floating-circle circle-2"></div>
+        <div class="floating-circle circle-3"></div>
+    </div>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-brand">EMT System</div>
+        <ul class="nav-links">
+            <li><a href="admin-dashboard.html">Dashboard</a></li>
+            <li><a href="admin-info.html" class="active">Incidents</a></li>
+            <li><a href="admin-chronology.html">Chronology</a></li>
+            <li><a href="admin-ip.html">IP Status</a></li>
+            <li><a href="admin-pear.html">PEAR</a></li>
+        </ul>
+        <div class="user-section">
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar admin-avatar" id="userAvatar">
+                    AU
+                </div>
+                <div class="profile-info">
+                    <div style="font-weight: 600; font-size: 0.9rem;" id="userName">Admin User</div>
+                    <div style="font-size: 0.8rem; color: var(--gray);" id="userPosition">System Administrator | EMT Admin</div>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Back Button -->
+        <div class="back-nav">
+            <a href="admin-dashboard.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to All Incidents
+            </a>
+        </div>
+
+        <div class="page-header">
+            <h1 class="page-title">Incident Details</h1>
+            <!-- Removed the "VIEW ONLY" badge -->
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+            <p>Loading incident details...</p>
+        </div>
+
+        <!-- Incident Details Section (hidden initially) -->
+        <div id="incidentDetails" class="incident-container" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-file-alt"></i> Incident Information
+                </h2>
+            </div>
+            
+            <!-- Boxes Grid Layout -->
+            <div class="boxes-grid">
+                <!-- BOX 1: INCIDENT DETAILS -->
+                <div class="info-box">
+                    <div class="box-header">
+                        <h3 class="box-title">
+                            <i class="fas fa-fire"></i> INCIDENT
+                        </h3>
+                        <!-- REMOVED STATUS BADGE -->
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Incident Name:</span>
+                            <span class="info-value" id="incidentName">Loading...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Date:</span>
+                            <span class="info-value" id="incidentDate">Loading...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Type of Incident:</span>
+                            <span class="info-value" id="incidentType">Loading...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Location:</span>
+                            <span class="info-value" id="incidentLocation">Loading...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Fire Type:</span>
+                            <span class="info-value" id="fireType">Loading...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Description:</span>
+                            <span class="info-value" id="incidentDescription">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- BOX 2: CHRONOLOGY -->
+                <div class="info-box">
+                    <div class="box-header">
+                        <h3 class="box-title">
+                            <i class="fas fa-clock"></i> CHRONOLOGY
+                        </h3>
+                        <button class="manage-btn" onclick="manageChronology()">
+                            <i class="fas fa-cog"></i> Manage
+                        </button>
+                    </div>
+                    <div class="info-grid" id="chronologyTimeline">
+                        <div class="loading-small">
+                            <i class="fas fa-spinner fa-spin"></i> Loading chronology...
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- BOX 3: IP STATUS -->
+                <div class="info-box">
+                    <div class="box-header">
+                        <h3 class="box-title">
+                            <i class="fas fa-shield-alt"></i> IP STATUS
+                        </h3>
+                        <button class="manage-btn" onclick="manageIPStatus()">
+                            <i class="fas fa-cog"></i> Manage
+                        </button>
+                    </div>
+                    <div class="info-grid" id="ipStatusList">
+                        <div class="loading-small">
+                            <i class="fas fa-spinner fa-spin"></i> Loading IP status...
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- BOX 4: PEAR -->
+                <div class="info-box">
+                    <div class="box-header">
+                        <h3 class="box-title">
+                            <i class="fas fa-chart-bar"></i> PEAR
+                        </h3>
+                        <button class="manage-btn" onclick="managePEAR()">
+                            <i class="fas fa-cog"></i> Manage
+                        </button>
+                    </div>
+                    <div class="info-grid" id="pearDetails">
+                        <div class="loading-small">
+                            <i class="fas fa-spinner fa-spin"></i> Loading PEAR data...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="back-btn" onclick="window.location.href='admin-dashboard.html'">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </button>
+                <button class="download-btn" onclick="downloadIncidentPDF()">
+                    <i class="fas fa-file-pdf"></i> Download PDF Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="error-state" style="display: none;">
+            <div class="error-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3>Error Loading Incident</h3>
+            <p id="errorMessage">Unable to load incident details. Please try again.</p>
+            <button class="back-btn" onclick="window.location.href='admin-all.html'">
+                <i class="fas fa-arrow-left"></i> Back to All Incidents
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAL5PhLd1pLhppxnZBoZnZWvmsyUQnttOQ",
+            authDomain: "emt02-782e1.firebaseapp.com",
+            projectId: "emt02-782e1",
+            storageBucket: "emt02-782e1.firebasestorage.app",
+            messagingSenderId: "791132862958",
+            appId: "1:791132862958:web:8630b126f789c772ed76ff",
+            measurementId: "G-BRXT4D79SL"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Global variables
+        let currentIncidentId = null;
+        let currentIncidentData = null;
+        let chronologyData = [];
+        let ipStatusData = [];
+        let pearData = [];
+
+        // Check admin access
+        function checkAdminAccess() {
+            const userData = localStorage.getItem('emtUserData');
+            
+            if (!userData) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(userData);
+                if (user.isGuest || !user.signedIn) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                displayUserProfile(user);
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Display user profile - FIXED to use actual user data
+        function displayUserProfile(user) {
+            // Get initials from user name
+            const initials = user.name ? 
+                user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'AU';
+            
+            // Update user info display
+            document.getElementById('userAvatar').textContent = initials;
+            document.getElementById('userName').textContent = user.name || 'Admin User';
+            
+            // Create position string based on available data
+            let positionText = '';
+            if (user.position) {
+                positionText += user.position;
+            }
+            if (user.emtRole) {
+                if (positionText) positionText += ' | ';
+                positionText += user.emtRole;
+            }
+            if (!positionText) {
+                positionText = 'System Administrator | EMT Admin';
+            }
+            
+            document.getElementById('userPosition').textContent = positionText;
+            
+            console.log('User profile displayed:', user);
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('emtUserData');
+                localStorage.removeItem('lastViewedIncidentId');
+                localStorage.removeItem('currentEditIncidentId');
+                localStorage.removeItem('currentIncidentId');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Format date for display
+        function formatDateDisplay(date) {
+            if (!date) return 'N/A';
+            
+            try {
+                if (typeof date === 'string') {
+                    date = new Date(date);
+                }
+                
+                if (date instanceof Date && !isNaN(date.getTime())) {
+                    const options = { 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric'
+                    };
+                    return date.toLocaleDateString('en-GB', options);
+                }
+            } catch (error) {
+                console.error('Error formatting date:', error);
+            }
+            
+            return 'Invalid Date';
+        }
+
+        // Format time for display
+        function formatTimeDisplay(date) {
+            if (!date) return 'N/A';
+            
+            try {
+                if (typeof date === 'string') {
+                    date = new Date(date);
+                }
+                
+                if (date instanceof Date && !isNaN(date.getTime())) {
+                    return date.toLocaleTimeString('en-MY', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                }
+            } catch (error) {
+                console.error('Error formatting time:', error);
+            }
+            
+            return 'Invalid Time';
+        }
+
+        // Capitalize first letter
+        function capitalizeFirstLetter(string) {
+            return string ? string.charAt(0).toUpperCase() + string.slice(1) : 'N/A';
+        }
+
+        // Get status color
+        function getStatusColor(status) {
+            switch(status.toLowerCase()) {
+                case 'active':
+                case 'ongoing':
+                    return 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)';
+                case 'completed':
+                case 'closed':
+                    return 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+                case 'plan':
+                case 'planned':
+                    return 'linear-gradient(135deg, #f39c12 0%, #d35400 100%)';
+                case 'monitoring':
+                    return 'linear-gradient(135deg, #5d9cec 0%, #4a89dc 100%)';
+                default:
+                    return 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)';
+            }
+        }
+
+        // Load incident data from Firebase
+        async function loadIncidentData() {
+            try {
+                // Get incident ID from URL parameters FIRST - FIXED LOGIC
+                const urlParams = new URLSearchParams(window.location.search);
+                currentIncidentId = urlParams.get('incidentId');
+                
+                // If not in URL, try localStorage
+                if (!currentIncidentId) {
+                    currentIncidentId = localStorage.getItem('currentViewIncidentId') || 
+                                       localStorage.getItem('currentIncidentId') ||
+                                       localStorage.getItem('lastViewedIncidentId');
+                }
+                
+                // If still no ID, check for new incident creation
+                if (!currentIncidentId) {
+                    currentIncidentId = localStorage.getItem('newIncidentId');
+                }
+                
+                if (!currentIncidentId) {
+                    throw new Error('No incident ID provided');
+                }
+                
+                console.log('Loading incident ID:', currentIncidentId);
+                
+                // Save to localStorage untuk highlight functionality
+                localStorage.setItem('currentIncidentId', currentIncidentId);
+                localStorage.setItem('lastViewedIncidentId', currentIncidentId);
+                
+                // Load main incident data
+                const incidentDoc = await db.collection('incidents').doc(currentIncidentId).get();
+                
+                if (!incidentDoc.exists) {
+                    throw new Error('Incident not found in database');
+                }
+                
+                currentIncidentData = { id: incidentDoc.id, ...incidentDoc.data() };
+                console.log('Loaded incident data:', currentIncidentData);
+                
+                // Load all subcollections in parallel
+                await Promise.all([
+                    loadChronologyData(),
+                    loadIPStatusData(),
+                    loadPEARData()
+                ]);
+                
+                // Display all data
+                displayIncidentData();
+                
+            } catch (error) {
+                console.error('Error loading incident data:', error);
+                showErrorState(error.message);
+            }
+        }
+
+        // Load Chronology data from subcollection
+        async function loadChronologyData() {
+            try {
+                const snapshot = await db.collection('incidents').doc(currentIncidentId)
+                    .collection('chronology')
+                    .orderBy('createdAt', 'asc')
+                    .get();
+                
+                chronologyData = [];
+                
+                if (!snapshot.empty) {
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        chronologyData.push({ 
+                            id: doc.id, 
+                            ...data
+                        });
+                    });
+                    console.log(`Loaded ${chronologyData.length} chronology records`);
+                }
+                
+            } catch (error) {
+                console.error('Error loading chronology data:', error);
+            }
+        }
+
+        // Load IP Status data from subcollection
+        async function loadIPStatusData() {
+            try {
+                const snapshot = await db.collection('incidents').doc(currentIncidentId)
+                    .collection('IPstatus')
+                    .orderBy('timestamp', 'desc')
+                    .get();
+                
+                ipStatusData = [];
+                
+                if (!snapshot.empty) {
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        ipStatusData.push({ 
+                            id: doc.id, 
+                            ...data
+                        });
+                    });
+                    console.log(`Loaded ${ipStatusData.length} IP status records:`, ipStatusData);
+                }
+                
+            } catch (error) {
+                console.error('Error loading IP status data:', error);
+            }
+        }
+
+        // Load PEAR data from subcollection
+        async function loadPEARData() {
+            try {
+                const snapshot = await db.collection('incidents').doc(currentIncidentId)
+                    .collection('pear')
+                    .orderBy('timestamp', 'desc')
+                    .get();
+                
+                pearData = [];
+                
+                if (!snapshot.empty) {
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        pearData.push({ 
+                            id: doc.id, 
+                            ...data
+                        });
+                    });
+                    console.log(`Loaded ${pearData.length} PEAR records:`, pearData);
+                }
+                
+            } catch (error) {
+                console.error('Error loading PEAR data:', error);
+            }
+        }
+
+        // Display incident data on the page
+        function displayIncidentData() {
+            // Hide loading, show content
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('incidentDetails').style.display = 'block';
+            
+            // Format dates - USING INCIDENT'S ACTUAL DATE, NOT TODAY'S DATE
+            const incidentDate = currentIncidentData.createdAt 
+                ? currentIncidentData.createdAt.toDate() 
+                : new Date();
+            
+            // Display main incident info
+            document.getElementById('incidentName').textContent = currentIncidentData.name || 'Unnamed Incident';
+            document.getElementById('incidentDate').textContent = formatDateDisplay(incidentDate); // FIXED: Show incident's date
+            document.getElementById('incidentType').textContent = capitalizeFirstLetter(currentIncidentData.type || 'Other');
+            document.getElementById('fireType').textContent = capitalizeFirstLetter(currentIncidentData.fireType || 'Real');
+            document.getElementById('incidentLocation').textContent = currentIncidentData.location || 'Not specified';
+            document.getElementById('incidentDescription').textContent = currentIncidentData.description || 'No description provided';
+            
+            // Display additional sections
+            displayChronologySection();
+            displayIPStatusSection();
+            displayPEARSection();
+            
+            // Highlight selected incident
+            highlightSelectedIncident();
+        }
+
+        // Display Chronology Section
+        function displayChronologySection() {
+            const timelineContainer = document.getElementById('chronologyTimeline');
+            
+            if (chronologyData.length === 0) {
+                timelineContainer.innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Report By:</span>
+                        <span class="info-value empty">No data</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value empty">No data</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Incident Info:</span>
+                        <span class="info-value empty">No information</span>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Get the latest chronology record
+            const latestChronology = chronologyData[chronologyData.length - 1];
+            
+            let timelineHTML = `
+                <div class="info-row">
+                    <span class="info-label">Report By:</span>
+                    <span class="info-value">${latestChronology.name || latestChronology.reportBy || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Location:</span>
+                    <span class="info-value">${latestChronology.location || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Incident Info:</span>
+                    <span class="info-value">${latestChronology.info || 'No details provided'}</span>
+                </div>
+            `;
+            
+            timelineContainer.innerHTML = timelineHTML;
+        }
+
+        // Display IP Status Section
+        function displayIPStatusSection() {
+            const statusContainer = document.getElementById('ipStatusList');
+            
+            if (ipStatusData.length === 0) {
+                statusContainer.innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Reported By:</span>
+                        <span class="info-value empty">No data</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">IP ID:</span>
+                        <span class="info-value empty">No data</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">IP Status:</span>
+                        <span class="info-value empty">No data</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value empty">No data</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Info Incident:</span>
+                        <span class="info-value empty">No information</span>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Get the latest IP status record
+            const latestIPStatus = ipStatusData[0];
+            const status = latestIPStatus.ipStatus || latestIPStatus.status || 'Unknown';
+            const ipId = latestIPStatus.IPid || latestIPStatus.id || 'N/A';
+            const reportedBy = latestIPStatus.name || latestIPStatus.reportBy || latestIPStatus.reportedBy || 'N/A';
+            const location = latestIPStatus.location || 'Not specified';
+            const info = latestIPStatus.infoIncident || latestIPStatus.info || 'No additional information';
+            
+            let statusHTML = `
+                <div class="info-row">
+                    <span class="info-label">Reported By:</span>
+                    <span class="info-value">${reportedBy}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">IP ID:</span>
+                    <span class="info-value">${ipId}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">IP Status:</span>
+                    <span class="info-value">${capitalizeFirstLetter(status)}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Location:</span>
+                    <span class="info-value">${location}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Info Incident:</span>
+                    <span class="info-value">${info}</span>
+                </div>
+            `;
+            
+            statusContainer.innerHTML = statusHTML;
+        }
+
+        // Display PEAR Section
+        function displayPEARSection() {
+            const pearContainer = document.getElementById('pearDetails');
+            
+            if (pearData.length === 0) {
+                pearContainer.innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">Reported By:</span>
+                        <span class="info-value empty">No data</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Category:</span>
+                        <span class="info-value empty">No data</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Description:</span>
+                        <span class="info-value empty">No data</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value empty">No data</span>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Get the latest PEAR record
+            const latestPear = pearData[0];
+            const reportedBy = latestPear.name || latestPear.reportBy || 'N/A';
+            const category = latestPear.category || 'General';
+            const description = latestPear.description || 'No description available';
+            const status = latestPear.status || 'Unknown';
+            
+            let pearHTML = `
+                <div class="info-row">
+                    <span class="info-label">Reported By:</span>
+                    <span class="info-value">${reportedBy}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Category:</span>
+                    <span class="info-value">${capitalizeFirstLetter(category)}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Description:</span>
+                    <span class="info-value">${description}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">${capitalizeFirstLetter(status)}</span>
+                </div>
+            `;
+            
+            pearContainer.innerHTML = pearHTML;
+        }
+
+        // Highlight selected incident
+        function highlightSelectedIncident() {
+            const incidentId = localStorage.getItem('lastViewedIncidentId');
+            if (incidentId && currentIncidentId === incidentId) {
+                // Add glow effect to incident container
+                const incidentContainer = document.getElementById('incidentDetails');
+                if (incidentContainer) {
+                    incidentContainer.style.boxShadow = '0 0 0 3px rgba(93, 156, 236, 0.5), 0 15px 35px rgba(0, 0, 0, 0.2)';
+                    incidentContainer.style.borderLeft = '5px solid #5d9cec';
+                    
+                    // Add pulse animation
+                    incidentContainer.style.animation = 'pulse 2s infinite';
+                }
+            }
+        }
+
+        // Add pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% {
+                    box-shadow: 0 0 0 0 rgba(93, 156, 236, 0.7), 0 15px 35px rgba(0, 0, 0, 0.2);
+                }
+                70% {
+                    box-shadow: 0 0 0 10px rgba(93, 156, 236, 0), 0 15px 35px rgba(0, 0, 0, 0.2);
+                }
+                100% {
+                    box-shadow: 0 0 0 0 rgba(93, 156, 236, 0), 0 15px 35px rgba(0, 0, 0, 0.2);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Show error state
+        function showErrorState(message) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // ===== MANAGE FUNCTIONS =====
+        
+        // Fungsi untuk manage Chronology - FIXED VERSION
+        function manageChronology() {
+            if (!currentIncidentId) {
+                alert('No incident selected');
+                return;
+            }
+            
+            // Simpan incident ID untuk digunakan di admin-chronology.html
+            localStorage.setItem('currentIncidentId', currentIncidentId);
+            localStorage.setItem('lastViewedIncidentId', currentIncidentId);
+            
+            // Navigate ke admin-chronology.html dengan incidentId dalam URL
+            window.location.href = `admin-chronology.html?incidentId=${currentIncidentId}`;
+        }
+
+        // Fungsi untuk manage IP Status - FIXED VERSION
+        function manageIPStatus() {
+            if (!currentIncidentId) {
+                alert('No incident selected');
+                return;
+            }
+            
+            // Simpan incident ID untuk digunakan di admin-ip.html
+            localStorage.setItem('currentIncidentId', currentIncidentId);
+            localStorage.setItem('lastViewedIncidentId', currentIncidentId);
+            
+            // Navigate ke admin-ip.html dengan incidentId dalam URL
+            window.location.href = `admin-ip.html?incidentId=${currentIncidentId}`;
+        }
+
+        // Fungsi untuk manage PEAR - FIXED VERSION
+        function managePEAR() {
+            if (!currentIncidentId) {
+                alert('No incident selected');
+                return;
+            }
+            
+            // Simpan incident ID untuk digunakan di admin-pear.html
+            localStorage.setItem('currentIncidentId', currentIncidentId);
+            localStorage.setItem('lastViewedIncidentId', currentIncidentId);
+            
+            // Navigate ke admin-pear.html dengan incidentId dalam URL
+            window.location.href = `admin-pear.html?incidentId=${currentIncidentId}`;
+        }
+
+        // Download incident as PDF
+        async function downloadIncidentPDF() {
+            if (!currentIncidentData) {
+                alert('No incident data to download');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Format dates
+                const incidentDate = currentIncidentData.createdAt 
+                    ? currentIncidentData.createdAt.toDate() 
+                    : new Date();
+                
+                // Set PDF properties
+                doc.setProperties({
+                    title: `Incident Report - ${currentIncidentData.name}`,
+                    subject: 'EMT Incident Report',
+                    author: 'EMT System'
+                });
+                
+                // Add header
+                doc.setFontSize(20);
+                doc.setTextColor(40, 40, 40);
+                doc.text('INCIDENT DETAILED REPORT', 105, 20, null, null, 'center');
+                
+                doc.setFontSize(12);
+                doc.setTextColor(100, 100, 100);
+                doc.text('Emergency Management Team System', 105, 30, null, null, 'center');
+                
+                // Incident Details Table
+                const incidentDetails = [
+                    ['Incident Name:', currentIncidentData.name || 'Not specified'],
+                    ['Date:', formatDateDisplay(incidentDate)], // FIXED: Show incident's date
+                    ['Incident Type:', capitalizeFirstLetter(currentIncidentData.type || 'Other')],
+                    ['Fire Type:', capitalizeFirstLetter(currentIncidentData.fireType || 'Real')],
+                    ['Location:', currentIncidentData.location || 'Not specified'],
+                    ['Description:', currentIncidentData.description || 'No description'],
+                    ['Created By:', currentIncidentData.createdBy || 'Admin User']
+                ];
+                
+                // Create main table
+                doc.autoTable({
+                    startY: 45,
+                    head: [['Field', 'Value']],
+                    body: incidentDetails,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [93, 156, 236],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 11
+                    },
+                    bodyStyles: {
+                        fontSize: 10
+                    },
+                    styles: {
+                        cellPadding: 5,
+                        fontSize: 10,
+                        valign: 'middle'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 50, fontStyle: 'bold' },
+                        1: { cellWidth: 120 }
+                    },
+                    margin: { left: 20, right: 20 }
+                });
+                
+                let finalY = doc.lastAutoTable.finalY + 15;
+                
+                // Add Chronology section if data exists
+                if (chronologyData.length > 0) {
+                    doc.setFontSize(16);
+                    doc.setTextColor(60, 60, 60);
+                    doc.text('CHRONOLOGY', 20, finalY);
+                    
+                    finalY += 10;
+                    
+                    const chronologyForPDF = chronologyData.map((item, index) => {
+                        const time = item.createdAt ? formatTimeDisplay(item.createdAt.toDate()) : 'N/A';
+                        const date = item.createdAt ? formatDateDisplay(item.createdAt.toDate()) : 'N/A';
+                        return [
+                            index + 1,
+                            `${time}\n${date}`,
+                            item.name || 'Report',
+                            item.location || 'N/A',
+                            item.info || 'No details'
+                        ];
+                    });
+                    
+                    doc.autoTable({
+                        startY: finalY,
+                        head: [['No.', 'Time & Date', 'Reported By', 'Location', 'Details']],
+                        body: chronologyForPDF,
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: [72, 207, 173],
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold',
+                            fontSize: 10
+                        },
+                        bodyStyles: {
+                            fontSize: 9,
+                            cellPadding: 3
+                        },
+                        styles: {
+                            cellPadding: 4,
+                            fontSize: 9
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 15 },
+                            1: { cellWidth: 35 },
+                            2: { cellWidth: 30 },
+                            3: { cellWidth: 35 },
+                            4: { cellWidth: 55 }
+                        }
+                    });
+                    
+                    finalY = doc.lastAutoTable.finalY + 15;
+                }
+                
+                // Add IP Status section if data exists
+                if (ipStatusData.length > 0) {
+                    if (finalY > 250) {
+                        doc.addPage();
+                        finalY = 20;
+                    }
+                    
+                    doc.setFontSize(16);
+                    doc.setTextColor(60, 60, 60);
+                    doc.text('IP STATUS', 20, finalY);
+                    
+                    finalY += 10;
+                    
+                    const ipStatusForPDF = ipStatusData.map((item, index) => {
+                        const ipId = item.IPid || item.id || `IP-${index + 1}`;
+                        const location = item.location || 'Not specified';
+                        const info = item.infoIncident || item.info || 'No additional information';
+                        const ipStatus = capitalizeFirstLetter(item.ipStatus || item.status || 'Unknown');
+                        const reportedBy = item.name || item.reportBy || item.reportedBy || 'N/A';
+                        
+                        return [
+                            ipId,
+                            location,
+                            info,
+                            ipStatus,
+                            reportedBy
+                        ];
+                    });
+                    
+                    doc.autoTable({
+                        startY: finalY,
+                        head: [['IP ID', 'Location', 'Info', 'Status', 'Reported By']],
+                        body: ipStatusForPDF,
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: [255, 107, 107],
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold',
+                            fontSize: 10
+                        },
+                        bodyStyles: {
+                            fontSize: 9
+                        },
+                        styles: {
+                            cellPadding: 4,
+                            fontSize: 9
+                        }
+                    });
+                    
+                    finalY = doc.lastAutoTable.finalY + 15;
+                }
+                
+                // Add PEAR section if data exists
+                if (pearData.length > 0) {
+                    if (finalY > 230) {
+                        doc.addPage();
+                        finalY = 20;
+                    }
+                    
+                    doc.setFontSize(16);
+                    doc.setTextColor(60, 60, 60);
+                    doc.text('PEAR ASSESSMENT', 20, finalY);
+                    
+                    finalY += 10;
+                    
+                    // Group PEAR data by category
+                    const groupedPEAR = {
+                        people: pearData.filter(item => item.category === 'people'),
+                        environment: pearData.filter(item => item.category === 'environment'),
+                        asset: pearData.filter(item => item.category === 'asset'),
+                        reputation: pearData.filter(item => item.category === 'reputation')
+                    };
+                    
+                    // Create table for each category
+                    Object.entries(groupedPEAR).forEach(([category, items]) => {
+                        if (items.length > 0) {
+                            // Add category heading
+                            doc.setFontSize(14);
+                            doc.setTextColor(80, 80, 80);
+                            doc.text(category.toUpperCase(), 20, finalY);
+                            finalY += 8;
+                            
+                            // Add items for this category
+                            const pearForPDF = items.map(item => {
+                                const reportedBy = item.name || item.reportBy || 'N/A';
+                                const description = item.description || 'No description available';
+                                const status = item.status || 'Unknown';
+                                
+                                return [
+                                    reportedBy,
+                                    description,
+                                    capitalizeFirstLetter(status)
+                                ];
+                            });
+                            
+                            doc.autoTable({
+                                startY: finalY,
+                                head: [['Reported By', 'Description', 'Status']],
+                                body: pearForPDF,
+                                theme: 'grid',
+                                headStyles: {
+                                    fillColor: [255, 206, 84],
+                                    textColor: [255, 255, 255],
+                                    fontStyle: 'bold',
+                                    fontSize: 10
+                                },
+                                bodyStyles: {
+                                    fontSize: 9
+                                },
+                                styles: {
+                                    cellPadding: 4,
+                                    fontSize: 9
+                                }
+                            });
+                            
+                            finalY = doc.lastAutoTable.finalY + 10;
+                        }
+                    });
+                }
+                
+                // Add footer
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text(`Page ${i} of ${pageCount}`, 105, 290, null, null, 'center');
+                    doc.text(`Generated on: ${formatDateDisplay(new Date())}`, 105, 295, null, null, 'center');
+                }
+                
+                // Download PDF
+                const fileName = `Incident_Report_${currentIncidentData.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.pdf`;
+                doc.save(fileName);
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF. Please try again.');
+            }
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminAccess();
+            loadIncidentData();
+        });
+    </script>
+</body>
+</html>

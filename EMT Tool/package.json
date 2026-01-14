@@ -1,0 +1,13 @@
+{
+  "name": "emt-system",
+  "version": "1.0.0",
+  "description": "EMT User Management System",
+  "main": "app.js",
+  "scripts": {
+    "build": "echo 'No build process needed for static site'",
+    "dev": "echo 'Run with live server'"
+  },
+  "keywords": ["emt", "firebase", "javascript"],
+  "author": "Your Name",
+  "license": "MIT"
+}

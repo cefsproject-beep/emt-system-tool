@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        /* Add these styles from public-all.html for consistent UI */
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #6c9bcf;
+            --accent: #7ba7d9;
+            --success: #6cceb6;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --card-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .circle-1 {
+            width: 100px;
+            height: 100px;
+            top: 15%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .circle-2 {
+            width: 150px;
+            height: 150px;
+            top: 65%;
+            right: 8%;
+            animation-delay: 2s;
+        }
+
+        .circle-3 {
+            width: 80px;
+            height: 80px;
+            bottom: 25%;
+            left: 15%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-25px) rotate(180deg);
+                opacity: 0.3;
+            }
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 18px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--dark);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            background-clip: padding-box;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transition: left 0.3s ease;
+            z-index: -1;
+            background-clip: padding-box;
+        }
+
+        .nav-links a.active {
+            color: white;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
+
+        .nav-links a.active::before {
+            left: 0;
+        }
+
+        .nav-links a:hover:not(.active) {
+            background-color: rgba(74, 111, 165, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: rgba(74, 111, 165, 0.1);
+            border-radius: 25px;
+            border: 1px solid rgba(74, 111, 165, 0.2);
+            background-clip: padding-box;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(74, 111, 165, 0.3);
+            background-clip: padding-box;
+        }
+
+        .public-avatar {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 40px 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: white;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
+        }
+
+        .date-display-main {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-top: 10px;
+            background: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid rgba(74, 111, 165, 0.2);
+        }
+
+        /* Card Layout Styles from public-all.html */
+        .incident-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideInUp 0.8s ease-out;
+            background-clip: padding-box;
+            border-left: 5px solid var(--accent);
+        }
+
+        .incident-container .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark);
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .section-title i {
+            color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--primary);
+        }
+
+        .boxes-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .boxes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-box {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(74, 111, 165, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-box:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+            border-color: var(--accent);
+        }
+
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(74, 111, 165, 0.1);
+        }
+
+        .box-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .box-title i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .view-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+        }
+
+        .view-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+            background: linear-gradient(135deg, #2980b9, #3498db);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            flex-grow: 1;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 12px 15px;
+            background: rgba(74, 111, 165, 0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(74, 111, 165, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .info-row:hover {
+            background: rgba(74, 111, 165, 0.07);
+            border-color: rgba(74, 111, 165, 0.1);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.9rem;
+            min-width: 140px;
+        }
+
+        .info-value {
+            flex: 1;
+            color: var(--dark);
+            font-weight: 500;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .info-value.empty {
+            color: var(--gray);
+            font-style: italic;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            min-width: 100px;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-badge-online {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+
+        .status-badge-offline {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .status-badge-maintenance {
+            background: linear-gradient(135deg, #f39c12 0%, #d35400 100%);
+        }
+
+        .status-badge-warning {
+            background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
+        }
+
+        .status-badge-unknown {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+
+        .ip-id-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            background: rgba(74, 111, 165, 0.1);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--dark);
+            border: 1px solid rgba(74, 111, 165, 0.2);
+        }
+
+        /* Pagination Card */
+        .pagination-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(74, 111, 165, 0.1);
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .page-number {
+            padding: 10px 16px;
+            background: rgba(74, 111, 165, 0.1);
+            color: var(--primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+            border: 2px solid transparent;
+        }
+
+        .page-number:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(74, 111, 165, 0.3);
+        }
+
+        .page-number.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+            border-color: var(--primary);
+        }
+
+        .page-next {
+            padding: 10px 16px;
+            background: rgba(74, 111, 165, 0.1);
+            color: var(--primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-next:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(74, 111, 165, 0.3);
+        }
+
+        /* Table Controls */
+        .table-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .record-count {
+            font-size: 0.85rem;
+            color: var(--gray);
+            background: var(--light);
+            padding: 8px 15px;
+            border-radius: 25px;
+            border: 1px solid var(--light-gray);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .refresh-btn {
+            padding: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(74, 111, 165, 0.4);
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+        }
+
+        /* No Data Styling */
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray);
+            font-style: italic;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.9));
+            border-radius: 15px;
+            grid-column: 1 / -1;
+        }
+
+        .no-data i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            display: block;
+            color: var(--primary);
+        }
+
+        .no-data.error {
+            color: #e74c3c;
+        }
+
+        .no-data.error i {
+            color: #e74c3c;
+        }
+
+        /* Back Navigation */
+        .back-nav {
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e8f2ff 100%);
+            color: #5d9cec;
+            border: 2px solid #e8f2ff;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: linear-gradient(135deg, #5d9cec 0%, #4a89dc 100%);
+            color: white;
+            border-color: #5d9cec;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(93, 156, 236, 0.3);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            padding-top: 20px;
+            margin-top: 30px;
+            border-top: 2px solid rgba(74, 111, 165, 0.1);
+        }
+
+        .download-btn {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #48cfad 0%, #37bc9b 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .download-btn:hover {
+            background: linear-gradient(135deg, #37bc9b 0%, #26ab8a 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 207, 173, 0.3);
+        }
+
+        /* Loading State */
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading-spinner {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .loading-state p {
+            font-size: 1.1rem;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #fff5f5;
+            border-radius: 12px;
+            border: 2px solid #ffcccc;
+        }
+
+        .error-icon {
+            font-size: 3rem;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        .error-state h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+
+        .error-state p {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        /* Incident Highlight */
+        .incident-highlight {
+            position: relative;
+            border: 3px solid var(--accent);
+            box-shadow: 0 0 20px rgba(123, 167, 217, 0.3);
+        }
+
+        .incident-highlight::before {
+            content: 'CURRENTLY VIEWING';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            z-index: 1;
+        }
+
+        /* Subcollection Loading */
+        .subcollection-loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+            font-style: italic;
+        }
+
+        .subcollection-loading i {
+            margin-right: 10px;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px 15px;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .page-title {
+                font-size: 1.8rem;
+            }
+            
+            .boxes-grid {
+                gap: 15px;
+            }
+            
+            .info-box {
+                padding: 20px;
+            }
+            
+            .info-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .info-label {
+                min-width: auto;
+                width: 100%;
+            }
+            
+            .info-value {
+                text-align: left;
+                width: 100%;
+            }
+            
+            .pagination {
+                gap: 5px;
+            }
+            
+            .page-number {
+                padding: 8px 14px;
+                min-width: 35px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .incident-container {
+                padding: 20px;
+                border-radius: 15px;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .box-title {
+                font-size: 1.1rem;
+            }
+            
+            .view-btn {
+                padding: 8px 15px;
+                font-size: 0.85rem;
+            }
+            
+            .pagination-card {
+                padding: 20px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .download-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="floating-circle circle-1"></div>
+        <div class="floating-circle circle-2"></div>
+        <div class="floating-circle circle-3"></div>
+    </div>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-brand">EMT System</div>
+        <ul class="nav-links">
+            <li><a href="dashboard-public.html">Dashboard</a></li>
+            <li><a href="public-info.html" class="active">Incidents</a></li>
+            <li><a href="public-chronology.html">Chronology</a></li>
+            <li><a href="public-ip.html">IP Status</a></li>
+            <li><a href="public-pear.html">PEAR</a></li>
+        </ul>
+        <div class="user-section">
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar public-avatar">
+                    PU
+                </div>
+                <div class="profile-info">
+                    <div style="font-weight: 600; font-size: 0.9rem;">Public User</div>
+                    <div style="font-size: 0.8rem; color: var(--gray);">View Only Access | Public User</div>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Back Button -->
+        <div class="back-nav">
+            <a href="dashboard-public.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Records
+            </a>
+        </div>
+
+        <div class="page-header">
+            <h1 class="page-title">Incident Details</h1>
+            <div id="currentDateDisplay" class="date-display-main">Loading...</div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+            <p>Loading incident details...</p>
+        </div>
+
+        <!-- Incident Container (Dynamic) -->
+        <div id="incidentContainer">
+            <!-- Incident data will be loaded here dynamically -->
+        </div>
+
+        <!-- Pagination Card -->
+        <div id="paginationCard" class="pagination-card" style="display: none;">
+            <div class="pagination-container">
+                <!-- Pagination will be loaded here dynamically -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="download-btn" onclick="downloadIncidentPDF()">
+                <i class="fas fa-file-pdf"></i> Download PDF Report
+            </button>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="error-state" style="display: none;">
+            <div class="error-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3>Error Loading Incident</h3>
+            <p id="errorMessage">Unable to load incident details. Please try again.</p>
+            <button class="back-btn" onclick="window.location.href='dashboard-public.html'">
+                <i class="fas fa-arrow-left"></i> Back to Incident Records
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAL5PhLd1pLhppxnZBoZnZWvmsyUQnttOQ",
+            authDomain: "emt02-782e1.firebaseapp.com",
+            projectId: "emt02-782e1",
+            storageBucket: "emt02-782e1.firebasestorage.app",
+            messagingSenderId: "791132862958",
+            appId: "1:791132862958:web:8630b126f789c772ed76ff",
+            measurementId: "G-BRXT4D79SL"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Global variables
+        let allIncidentsData = [];
+        let currentIncidentData = null;
+        let currentIncidentId = null;
+        let currentPage = 1;
+        const itemsPerPage = 1;
+        let selectedDate = null;
+
+        // Check public access
+        function checkPublicAccess() {
+            console.log('Checking public access...');
+            
+            // Get incident ID from localStorage or URL
+            currentIncidentId = localStorage.getItem('currentViewIncidentId');
+            if (!currentIncidentId) {
+                const urlParams = new URLSearchParams(window.location.search);
+                currentIncidentId = urlParams.get('incidentId');
+            }
+            
+            if (!currentIncidentId) {
+                console.log('No incident ID found, redirecting to public dashboard');
+                window.location.href = 'dashboard-public.html';
+                return;
+            }
+            
+            console.log('Public access granted for incident:', currentIncidentId);
+            displayPublicUserProfile();
+        }
+
+        // Display public user profile
+        function displayPublicUserProfile() {
+            document.getElementById('userInfo').innerHTML = `
+                <div class="user-avatar public-avatar">
+                    PU
+                </div>
+                <div class="profile-info">
+                    <div style="font-weight: 600; font-size: 0.9rem;">Public User</div>
+                    <div style="font-size: 0.8rem; color: var(--gray);">View Only Access</div>
+                </div>
+            `;
+        }
+
+        // Logout function
+        function logout() {
+            window.location.href = 'dashboard-public.html';
+        }
+
+        // Format date as "DD Month YYYY"
+        function formatDateDisplay(date) {
+            return date.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            }).replace(',', '');
+        }
+
+        // Format time as "HH:MM" (24-hour format)
+        function formatTimeDisplay(timestamp) {
+            if (!timestamp) return 'N/A';
+            
+            try {
+                const date = timestamp.toDate();
+                return date.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+            } catch (error) {
+                console.warn('Error formatting timestamp to time:', error);
+                return 'N/A';
+            }
+        }
+
+        // Capitalize first letter
+        function capitalizeFirstLetter(string) {
+            return string ? string.charAt(0).toUpperCase() + string.slice(1) : '';
+        }
+
+        // Get status badge class
+        function getStatusBadgeClass(status) {
+            const statusValue = (status || '').toLowerCase();
+            switch(statusValue) {
+                case 'online':
+                case 'active':
+                case 'completed':
+                    return 'status-badge-online';
+                case 'offline':
+                case 'down':
+                    return 'status-badge-offline';
+                case 'maintenance':
+                    return 'status-badge-maintenance';
+                case 'warning':
+                case 'plan':
+                case 'ongoing':
+                    return 'status-badge-warning';
+                default:
+                    return 'status-badge-unknown';
+            }
+        }
+
+        // Get status icon
+        function getStatusIcon(status) {
+            const statusValue = (status || '').toLowerCase();
+            switch(statusValue) {
+                case 'online':
+                case 'active':
+                case 'completed':
+                    return 'fa-check-circle';
+                case 'offline':
+                case 'down':
+                    return 'fa-times-circle';
+                case 'maintenance':
+                    return 'fa-tools';
+                case 'warning':
+                case 'plan':
+                case 'ongoing':
+                    return 'fa-exclamation-triangle';
+                default:
+                    return 'fa-question-circle';
+            }
+        }
+
+        // Get date from incident
+        function getIncidentDate(incident) {
+            if (!incident.createdAt) return null;
+            try {
+                return incident.createdAt.toDate();
+            } catch (error) {
+                console.warn('Error getting incident date:', error);
+                return null;
+            }
+        }
+
+        // Check if two dates are the same day
+        function isSameDate(date1, date2) {
+            if (!date1 || !date2) return false;
+            return date1.getDate() === date2.getDate() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getFullYear() === date2.getFullYear();
+        }
+
+        // Load incident data
+        async function loadIncidentData(page = 1) {
+            try {
+                console.log('Loading incident data...');
+                currentPage = page;
+                
+                // Show loading
+                document.getElementById('loadingState').style.display = 'block';
+                document.getElementById('errorState').style.display = 'none';
+                hidePagination();
+
+                // Load the selected incident first
+                const incidentDoc = await db.collection('incidents').doc(currentIncidentId).get();
+                
+                if (!incidentDoc.exists) {
+                    throw new Error('Incident not found');
+                }
+                
+                currentIncidentData = { id: incidentDoc.id, ...incidentDoc.data() };
+                console.log('Loaded current incident:', currentIncidentData);
+                
+                // Get the date of the selected incident
+                selectedDate = getIncidentDate(currentIncidentData);
+                
+                // Load all incidents ordered by timestamp
+                const snapshot = await db.collection('incidents')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                allIncidentsData = [];
+                
+                if (!snapshot.empty) {
+                    // Filter incidents from the same date as selected incident
+                    snapshot.forEach((doc) => {
+                        const incident = doc.data();
+                        incident.id = doc.id;
+                        
+                        const incidentDate = getIncidentDate(incident);
+                        if (incidentDate && selectedDate && isSameDate(incidentDate, selectedDate)) {
+                            allIncidentsData.push(incident);
+                        }
+                    });
+                    
+                    console.log(`Found ${allIncidentsData.length} incidents from the same date`);
+                }
+
+                // Update date display
+                if (selectedDate) {
+                    document.getElementById('currentDateDisplay').textContent = formatDateDisplay(selectedDate);
+                }
+
+                // Hide loading and display incident immediately
+                document.getElementById('loadingState').style.display = 'none';
+                
+                // Display current incident with loading placeholders for subcollections
+                await displayCurrentIncident();
+
+                // Load subcollections in background
+                loadSubcollections();
+
+                // Create pagination
+                if (allIncidentsData.length > 1) {
+                    createSimplePagination();
+                    showPagination();
+                }
+
+            } catch (error) {
+                console.error('Error loading incident data:', error);
+                showErrorState(error.message);
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        }
+
+        // Load subcollections in background
+        async function loadSubcollections() {
+            try {
+                console.log('Loading subcollections...');
+                
+                // Load all subcollections in parallel
+                const [chronologyData, ipStatusData, pearData] = await Promise.all([
+                    loadRelatedData('chronology', currentIncidentId),
+                    loadRelatedData('IPstatus', currentIncidentId),
+                    loadRelatedData('pear', currentIncidentId)
+                ]);
+                
+                console.log('Subcollections loaded:', {
+                    chronology: chronologyData.length,
+                    ipStatus: ipStatusData.length,
+                    pear: pearData.length
+                });
+                
+                // Update the display with actual data
+                updateSubcollectionDisplay(chronologyData, ipStatusData, pearData);
+                
+            } catch (error) {
+                console.error('Error loading subcollections:', error);
+                // Still update display with error message
+                updateSubcollectionDisplay([], [], []);
+            }
+        }
+
+        // Load related data from subcollection
+        async function loadRelatedData(collectionName, incidentId) {
+            try {
+                const subcollectionRef = db.collection('incidents').doc(incidentId).collection(collectionName);
+                const snapshot = await subcollectionRef
+                    .orderBy('timestamp', 'desc')
+                    .limit(1)
+                    .get();
+                
+                const data = [];
+                snapshot.forEach((doc) => {
+                    data.push({ id: doc.id, ...doc.data() });
+                });
+                
+                return data;
+                
+            } catch (error) {
+                console.error(`Error loading ${collectionName}:`, error);
+                return [];
+            }
+        }
+
+        // Display current incident with loading placeholders
+        async function displayCurrentIncident() {
+            const container = document.getElementById('incidentContainer');
+            
+            if (!currentIncidentData) {
+                displayNoData();
+                return;
+            }
+
+            // Determine if this is the currently selected incident
+            const isSelectedIncident = currentIncidentData.id === currentIncidentId;
+            const highlightClass = isSelectedIncident ? 'incident-highlight' : '';
+
+            // Format incident date
+            let incidentDate = 'N/A';
+            if (currentIncidentData.createdAt) {
+                try {
+                    const date = currentIncidentData.createdAt.toDate();
+                    incidentDate = formatDateDisplay(date);
+                } catch (error) {
+                    console.warn('Error formatting incident date:', error);
+                }
+            }
+
+            container.innerHTML = `
+                <div class="incident-container ${highlightClass}">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-fire"></i> ${currentIncidentData.name || 'Unnamed Incident'}
+                        </h2>
+                        <div class="table-controls">
+                            <span class="record-count">
+                                Date: ${incidentDate} | 
+                                ${allIncidentsData.length} incident(s) | 
+                                Page ${currentPage} of ${Math.ceil(allIncidentsData.length / itemsPerPage)}
+                            </span>
+                            <button class="refresh-btn" onclick="refreshData()" title="Refresh Data">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="boxes-grid">
+                        <!-- BOX 1: INCIDENT -->
+                        <div class="info-box incident-details">
+                            <div class="box-header">
+                                <h3 class="box-title">
+                                    <i class="fas fa-fire"></i> INCIDENT
+                                </h3>
+                                ${isSelectedIncident ? '' : `<button class="view-btn" onclick="viewThisIncident('${currentIncidentData.id}')">
+                                    <i class="fas fa-eye"></i> View This
+                                </button>`}
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <span class="info-label">Incident Name:</span>
+                                    <span class="info-value">${currentIncidentData.name || 'Not specified'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Date:</span>
+                                    <span class="info-value">${incidentDate}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Type of Incident:</span>
+                                    <span class="info-value">${capitalizeFirstLetter(currentIncidentData.type || 'Not specified')}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Location:</span>
+                                    <span class="info-value">${currentIncidentData.location || 'Not specified'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Fire Type:</span>
+                                    <span class="info-value">${capitalizeFirstLetter(currentIncidentData.fireType || 'Not specified')}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Description:</span>
+                                    <span class="info-value ${currentIncidentData.description ? '' : 'empty'}">
+                                        ${currentIncidentData.description || 'No description provided'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Created By:</span>
+                                    <span class="info-value">${currentIncidentData.createdBy || 'Admin User'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- BOX 2: CHRONOLOGY -->
+                        <div class="info-box">
+                            <div class="box-header">
+                                <h3 class="box-title">
+                                    <i class="fas fa-clock"></i> CHRONOLOGY
+                                </h3>
+                                <button class="view-btn" onclick="viewChronology('${currentIncidentData.id}')">
+                                    <i class="fas fa-eye"></i> View Details
+                                </button>
+                            </div>
+                            <div class="info-grid" id="chronologyData">
+                                <div class="subcollection-loading">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading chronology data...
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- BOX 3: IP STATUS -->
+                        <div class="info-box">
+                            <div class="box-header">
+                                <h3 class="box-title">
+                                    <i class="fas fa-network-wired"></i> IP STATUS
+                                </h3>
+                                <button class="view-btn" onclick="viewIPStatus('${currentIncidentData.id}')">
+                                    <i class="fas fa-eye"></i> View Details
+                                </button>
+                            </div>
+                            <div class="info-grid" id="ipStatusData">
+                                <div class="subcollection-loading">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading IP status data...
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- BOX 4: PEAR -->
+                        <div class="info-box">
+                            <div class="box-header">
+                                <h3 class="box-title">
+                                    <i class="fas fa-user-shield"></i> PEAR
+                                </h3>
+                                <button class="view-btn" onclick="viewPear('${currentIncidentData.id}')">
+                                    <i class="fas fa-eye"></i> View Details
+                                </button>
+                            </div>
+                            <div class="info-grid" id="pearData">
+                                <div class="subcollection-loading">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading PEAR data...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update subcollection display with actual data
+        function updateSubcollectionDisplay(chronologyData, ipStatusData, pearData) {
+            // Update Chronology
+            const chronologyContainer = document.getElementById('chronologyData');
+            if (chronologyContainer) {
+                const latestChronology = chronologyData[0] || {};
+                chronologyContainer.innerHTML = chronologyData.length > 0 ? `
+                    <div class="info-row">
+                        <span class="info-label">Report By:</span>
+                        <span class="info-value ${latestChronology.name || latestChronology.reportBy ? '' : 'empty'}">
+                            ${latestChronology.name || latestChronology.reportBy || 'No data'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value ${latestChronology.location ? '' : 'empty'}">
+                            ${latestChronology.location || 'No data'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Incident Info:</span>
+                        <span class="info-value ${(latestChronology.infoIncident || latestChronology.info) ? '' : 'empty'}">
+                            ${latestChronology.infoIncident || latestChronology.info || 'No information'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Time:</span>
+                        <span class="info-value ${latestChronology.timestamp ? '' : 'empty'}">
+                            ${latestChronology.timestamp ? formatTimeDisplay(latestChronology.timestamp.toDate()) : 'No data'}
+                        </span>
+                    </div>
+                ` : `
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value empty">
+                            No chronology data available
+                        </span>
+                    </div>
+                `;
+            }
+
+            // Update IP Status
+            const ipStatusContainer = document.getElementById('ipStatusData');
+            if (ipStatusContainer) {
+                const latestIPStatus = ipStatusData[0] || {};
+                ipStatusContainer.innerHTML = ipStatusData.length > 0 ? `
+                    <div class="info-row">
+                        <span class="info-label">Reported By:</span>
+                        <span class="info-value ${latestIPStatus.name || latestIPStatus.reportBy ? '' : 'empty'}">
+                            ${latestIPStatus.name || latestIPStatus.reportBy || 'No data'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">IP ID:</span>
+                        <span class="info-value">
+                            ${latestIPStatus.IPid ? `<span class="ip-id-badge">${latestIPStatus.IPid}</span>` : '<span class="empty">No data</span>'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">IP Status:</span>
+                        <span class="info-value">
+                            ${latestIPStatus.ipStatus ? `
+                                <span class="status-badge ${getStatusBadgeClass(latestIPStatus.ipStatus)}">
+                                    <i class="fas ${getStatusIcon(latestIPStatus.ipStatus)}"></i> ${capitalizeFirstLetter(latestIPStatus.ipStatus)}
+                                </span>
+                            ` : '<span class="empty">No data</span>'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value ${latestIPStatus.location ? '' : 'empty'}">
+                            ${latestIPStatus.location || 'No data'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Info Incident:</span>
+                        <span class="info-value ${(latestIPStatus.infoIncident || latestIPStatus.info) ? '' : 'empty'}">
+                            ${latestIPStatus.infoIncident || latestIPStatus.info || 'No information'}
+                        </span>
+                    </div>
+                ` : `
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value empty">
+                            No IP status data available
+                        </span>
+                    </div>
+                `;
+            }
+
+            // Update PEAR
+            const pearContainer = document.getElementById('pearData');
+            if (pearContainer) {
+                const latestPear = pearData[0] || {};
+                pearContainer.innerHTML = pearData.length > 0 ? `
+                    <div class="info-row">
+                        <span class="info-label">Reported By:</span>
+                        <span class="info-value ${latestPear.name || latestPear.reportBy ? '' : 'empty'}">
+                            ${latestPear.name || latestPear.reportBy || 'No data'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Category:</span>
+                        <span class="info-value ${latestPear.category ? '' : 'empty'}">
+                            ${capitalizeFirstLetter(latestPear.category) || 'No data'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Description:</span>
+                        <span class="info-value ${latestPear.description ? '' : 'empty'}">
+                            ${latestPear.description || 'No data'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value">
+                            ${latestPear.status ? `
+                                <span class="status-badge ${getStatusBadgeClass(latestPear.status)}">
+                                    <i class="fas ${getStatusIcon(latestPear.status)}"></i> ${capitalizeFirstLetter(latestPear.status)}
+                                </span>
+                            ` : '<span class="empty">No data</span>'}
+                        </span>
+                    </div>
+                ` : `
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value empty">
+                            No PEAR data available
+                        </span>
+                    </div>
+                `;
+            }
+        }
+
+        // View this incident (when clicking on other incidents in pagination)
+        function viewThisIncident(incidentId) {
+            currentIncidentId = incidentId;
+            localStorage.setItem('currentViewIncidentId', incidentId);
+            loadIncidentData(1);
+        }
+
+        // View Chronology details
+        function viewChronology(incidentId) {
+            localStorage.setItem('currentIncidentId', incidentId);
+            window.location.href = "public-chronology.html";
+        }
+
+        // View IP Status details
+        function viewIPStatus(incidentId) {
+            localStorage.setItem('currentIncidentId', incidentId);
+            window.location.href = "public-ip.html";
+        }
+
+        // View PEAR details
+        function viewPear(incidentId) {
+            localStorage.setItem('currentIncidentId', incidentId);
+            window.location.href = "public-pear.html";
+        }
+
+        // Display no data message
+        function displayNoData() {
+            const container = document.getElementById('incidentContainer');
+            container.innerHTML = `
+                <div class="incident-container">
+                    <div class="no-data">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>No incident data found</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show error state
+        function showErrorState(message) {
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // Show pagination card
+        function showPagination() {
+            const paginationCard = document.getElementById('paginationCard');
+            if (paginationCard) {
+                paginationCard.style.display = 'block';
+            }
+        }
+
+        // Hide pagination card
+        function hidePagination() {
+            const paginationCard = document.getElementById('paginationCard');
+            if (paginationCard) {
+                paginationCard.style.display = 'none';
+            }
+        }
+
+        // Create simple pagination
+        function createSimplePagination() {
+            const paginationContainer = document.querySelector('.pagination-container');
+            const totalPages = Math.ceil(allIncidentsData.length / itemsPerPage);
+            
+            if (totalPages <= 1) {
+                hidePagination();
+                return;
+            }
+            
+            let paginationHTML = '<div class="pagination">';
+            
+            if (totalPages <= 2) {
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHTML += `<span class="page-number ${currentPage === i ? 'active' : ''}" onclick="goToPage(${i})">${i}</span>`;
+                }
+                
+                if (currentPage < totalPages) {
+                    paginationHTML += `<span class="page-next" onclick="goToPage(${currentPage + 1})">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>`;
+                }
+            } else {
+                if (currentPage === 1) {
+                    paginationHTML += `<span class="page-number active" onclick="goToPage(1)">1</span>`;
+                    paginationHTML += `<span class="page-number" onclick="goToPage(2)">2</span>`;
+                    paginationHTML += `<span class="page-next" onclick="goToPage(2)">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>`;
+                } else if (currentPage === totalPages) {
+                    paginationHTML += `<span class="page-next" onclick="goToPage(${totalPages - 1})">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>`;
+                    paginationHTML += `<span class="page-number" onclick="goToPage(${totalPages - 1})">${totalPages - 1}</span>`;
+                    paginationHTML += `<span class="page-number active" onclick="goToPage(${totalPages})">${totalPages}</span>`;
+                } else {
+                    paginationHTML += `<span class="page-number active" onclick="goToPage(${currentPage})">${currentPage}</span>`;
+                    paginationHTML += `<span class="page-number" onclick="goToPage(${currentPage + 1})">${currentPage + 1}</span>`;
+                    paginationHTML += `<span class="page-next" onclick="goToPage(${currentPage + 1})">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>`;
+                }
+            }
+            
+            paginationHTML += '</div>';
+            paginationContainer.innerHTML = paginationHTML;
+        }
+
+        // Go to specific page
+        function goToPage(page) {
+            if (page !== currentPage && page >= 1 && page <= Math.ceil(allIncidentsData.length / itemsPerPage)) {
+                // Get the incident for this page
+                const startIndex = (page - 1) * itemsPerPage;
+                const incidentForPage = allIncidentsData[startIndex];
+                
+                if (incidentForPage) {
+                    currentIncidentId = incidentForPage.id;
+                    currentIncidentData = incidentForPage;
+                    localStorage.setItem('currentViewIncidentId', incidentForPage.id);
+                    
+                    // Reload everything for this incident
+                    loadIncidentData(page);
+                }
+            }
+        }
+
+        // Refresh data
+        function refreshData() {
+            const btn = document.querySelector('.refresh-btn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+            
+            loadIncidentData(currentPage);
+            
+            setTimeout(() => {
+                if (btn) {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            }, 1000);
+        }
+
+        // Download incident as PDF
+        async function downloadIncidentPDF() {
+            if (!currentIncidentData) {
+                alert('No incident data to download');
+                return;
+            }
+            
+            try {
+                // Load all data for PDF
+                const [chronologyData, ipStatusData, pearData] = await Promise.all([
+                    loadRelatedData('chronology', currentIncidentId),
+                    loadRelatedData('IPstatus', currentIncidentId),
+                    loadRelatedData('pear', currentIncidentId)
+                ]);
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Format dates
+                const createdDate = currentIncidentData.createdAt 
+                    ? currentIncidentData.createdAt.toDate() 
+                    : new Date();
+                
+                // Set PDF properties
+                doc.setProperties({
+                    title: `Incident Report - ${currentIncidentData.name}`,
+                    subject: 'EMT Incident Report',
+                    author: 'EMT System'
+                });
+                
+                // Add header
+                doc.setFontSize(20);
+                doc.setTextColor(40, 40, 40);
+                doc.text('INCIDENT DETAILED REPORT', 105, 20, null, null, 'center');
+                
+                doc.setFontSize(12);
+                doc.setTextColor(100, 100, 100);
+                doc.text('Emergency Management Team System', 105, 30, null, null, 'center');
+                
+                // Incident Details Table
+                const incidentDetails = [
+                    ['Incident Name:', currentIncidentData.name || 'Not specified'],
+                    ['Incident Type:', capitalizeFirstLetter(currentIncidentData.type || 'Other')],
+                    ['Fire Type:', capitalizeFirstLetter(currentIncidentData.fireType || 'Real')],
+                    ['Location:', currentIncidentData.location || 'Not specified'],
+                    ['Description:', currentIncidentData.description || 'No description'],
+                    ['Created By:', currentIncidentData.createdBy || 'Admin User'],
+                    ['Created At:', formatDateDisplay(createdDate)]
+                ];
+                
+                // Create main table
+                doc.autoTable({
+                    startY: 45,
+                    head: [['Field', 'Value']],
+                    body: incidentDetails,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [93, 156, 236],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 11
+                    },
+                    bodyStyles: {
+                        fontSize: 10
+                    },
+                    styles: {
+                        cellPadding: 5,
+                        fontSize: 10,
+                        valign: 'middle'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 50, fontStyle: 'bold' },
+                        1: { cellWidth: 120 }
+                    },
+                    margin: { left: 20, right: 20 }
+                });
+                
+                let finalY = doc.lastAutoTable.finalY + 15;
+                
+                // Add Chronology section if data exists
+                if (chronologyData.length > 0) {
+                    doc.setFontSize(16);
+                    doc.setTextColor(60, 60, 60);
+                    doc.text('CHRONOLOGY', 20, finalY);
+                    
+                    finalY += 10;
+                    
+                    const chronologyForPDF = chronologyData.map((item, index) => {
+                        const time = item.timestamp ? formatTimeDisplay(item.timestamp.toDate()) : 'N/A';
+                        return [
+                            index + 1,
+                            time,
+                            item.name || 'Report',
+                            item.location || 'N/A',
+                            item.infoIncident || item.info || 'No details'
+                        ];
+                    });
+                    
+                    doc.autoTable({
+                        startY: finalY,
+                        head: [['No.', 'Time', 'Reported By', 'Location', 'Details']],
+                        body: chronologyForPDF,
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: [72, 207, 173],
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold',
+                            fontSize: 10
+                        },
+                        bodyStyles: {
+                            fontSize: 9,
+                            cellPadding: 3
+                        },
+                        styles: {
+                            cellPadding: 4,
+                            fontSize: 9
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 15 },
+                            1: { cellWidth: 25 },
+                            2: { cellWidth: 30 },
+                            3: { cellWidth: 35 },
+                            4: { cellWidth: 55 }
+                        }
+                    });
+                    
+                    finalY = doc.lastAutoTable.finalY + 15;
+                }
+                
+                // Add IP Status section if data exists
+                if (ipStatusData.length > 0) {
+                    if (finalY > 250) {
+                        doc.addPage();
+                        finalY = 20;
+                    }
+                    
+                    doc.setFontSize(16);
+                    doc.setTextColor(60, 60, 60);
+                    doc.text('IP STATUS', 20, finalY);
+                    
+                    finalY += 10;
+                    
+                    const ipStatusForPDF = ipStatusData.map((item, index) => {
+                        const ipId = item.IPid || item.id || `IP-${index + 1}`;
+                        const location = item.location || 'Not specified';
+                        const info = item.infoIncident || item.info || 'No additional information';
+                        const ipStatus = capitalizeFirstLetter(item.ipStatus || item.status || 'Unknown');
+                        const reportedBy = item.name || item.reportBy || item.reportedBy || 'N/A';
+                        
+                        return [
+                            ipId,
+                            location,
+                            info,
+                            ipStatus,
+                            reportedBy
+                        ];
+                    });
+                    
+                    doc.autoTable({
+                        startY: finalY,
+                        head: [['IP ID', 'Location', 'Info', 'Status', 'Reported By']],
+                        body: ipStatusForPDF,
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: [255, 107, 107],
+                            textColor: [255, 255, 255],
+                            fontStyle: 'bold',
+                            fontSize: 10
+                        },
+                        bodyStyles: {
+                            fontSize: 9
+                        },
+                        styles: {
+                            cellPadding: 4,
+                            fontSize: 9
+                        }
+                    });
+                    
+                    finalY = doc.lastAutoTable.finalY + 15;
+                }
+                
+                // Add PEAR section if data exists
+                if (pearData.length > 0) {
+                    if (finalY > 230) {
+                        doc.addPage();
+                        finalY = 20;
+                    }
+                    
+                    doc.setFontSize(16);
+                    doc.setTextColor(60, 60, 60);
+                    doc.text('PEAR ASSESSMENT', 20, finalY);
+                    
+                    finalY += 10;
+                    
+                    // Group PEAR data by category
+                    const groupedPEAR = {
+                        people: pearData.filter(item => item.category === 'people'),
+                        environment: pearData.filter(item => item.category === 'environment'),
+                        asset: pearData.filter(item => item.category === 'asset'),
+                        reputation: pearData.filter(item => item.category === 'reputation')
+                    };
+                    
+                    // Create table for each category
+                    Object.entries(groupedPEAR).forEach(([category, items]) => {
+                        if (items.length > 0) {
+                            // Add category heading
+                            doc.setFontSize(14);
+                            doc.setTextColor(80, 80, 80);
+                            doc.text(category.toUpperCase(), 20, finalY);
+                            finalY += 8;
+                            
+                            // Add items for this category
+                            const pearForPDF = items.map(item => {
+                                const reportedBy = item.name || item.reportBy || 'N/A';
+                                const description = item.description || 'No description available';
+                                const status = item.status || 'Unknown';
+                                
+                                return [
+                                    reportedBy,
+                                    description,
+                                    capitalizeFirstLetter(status)
+                                ];
+                            });
+                            
+                            doc.autoTable({
+                                startY: finalY,
+                                head: [['Reported By', 'Description', 'Status']],
+                                body: pearForPDF,
+                                theme: 'grid',
+                                headStyles: {
+                                    fillColor: [255, 206, 84],
+                                    textColor: [255, 255, 255],
+                                    fontStyle: 'bold',
+                                    fontSize: 10
+                                },
+                                bodyStyles: {
+                                    fontSize: 9
+                                },
+                                styles: {
+                                    cellPadding: 4,
+                                    fontSize: 9
+                                }
+                            });
+                            
+                            finalY = doc.lastAutoTable.finalY + 10;
+                        }
+                    });
+                }
+                
+                // Add footer
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text(`Page ${i} of ${pageCount}`, 105, 290, null, null, 'center');
+                    doc.text(`Generated on: ${formatDateDisplay(new Date())}`, 105, 295, null, null, 'center');
+                }
+                
+                // Download PDF
+                const fileName = `Incident_Report_${currentIncidentData.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.pdf`;
+                doc.save(fileName);
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF. Please try again.');
+            }
+        }
+
+        // Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    checkPublicAccess();
+    loadIncidentData(1);
+});
+    // View Chronology details - FIXED VERSION
+function viewChronology(incidentId) {
+    console.log('🚀 viewChronology called for incident:', incidentId);
+    
+    // Get incident date from current incident data
+    if (currentIncidentData && currentIncidentData.createdAt) {
+        try {
+            const incidentDate = currentIncidentData.createdAt.toDate();
+            
+            // Format date to YYYY-MM-DD
+            const year = incidentDate.getFullYear();
+            const month = String(incidentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(incidentDate.getDate()).padStart(2, '0');
+            const dateYMD = `${year}-${month}-${day}`;
+            
+            console.log('📅 Incident Date:', dateYMD);
+            console.log('📊 Incident Data:', currentIncidentData);
+            
+            // Clear any old data first
+            localStorage.removeItem('selectedDate');
+            localStorage.removeItem('selectedIncidentId');
+            
+            // Save to localStorage
+            localStorage.setItem('selectedDate', dateYMD);
+            localStorage.setItem('selectedIncidentId', incidentId);
+            
+            console.log('💾 Saved to localStorage:', {
+                date: dateYMD,
+                incidentId: incidentId
+            });
+            
+            // Redirect with URL parameters
+            window.location.href = `public-chronology.html?date=${dateYMD}&incidentId=${incidentId}`;
+            
+        } catch (error) {
+            console.error('Error getting incident date:', error);
+            // Fallback to just incidentId
+            localStorage.removeItem('selectedDate');
+            localStorage.removeItem('selectedIncidentId');
+            localStorage.setItem('selectedIncidentId', incidentId);
+            window.location.href = `public-chronology.html?incidentId=${incidentId}`;
+        }
+    } else {
+        // Fallback if no date available
+        console.warn('No incident date available, using fallback');
+        localStorage.removeItem('selectedDate');
+        localStorage.removeItem('selectedIncidentId');
+        localStorage.setItem('selectedIncidentId', incidentId);
+        window.location.href = `public-chronology.html?incidentId=${incidentId}`;
+    }
+}
+    </script>
+</body>
+</html>

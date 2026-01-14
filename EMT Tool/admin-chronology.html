@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #6c9bcf;
+            --accent: #7ba7d9;
+            --success: #6cceb6;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --card-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #a8c0ff 0%, #3f4c6b 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-attachment: fixed;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .circle-1 {
+            width: 100px;
+            height: 100px;
+            top: 15%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .circle-2 {
+            width: 150px;
+            height: 150px;
+            top: 65%;
+            right: 8%;
+            animation-delay: 2s;
+        }
+
+        .circle-3 {
+            width: 80px;
+            height: 80px;
+            bottom: 25%;
+            left: 15%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-25px) rotate(180deg);
+                opacity: 0.3;
+            }
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 18px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--dark);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            background-clip: padding-box;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transition: left 0.3s ease;
+            z-index: -1;
+            background-clip: padding-box;
+        }
+
+        .nav-links a.active {
+            color: white;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
+
+        .nav-links a.active::before {
+            left: 0;
+        }
+
+        .nav-links a:hover:not(.active) {
+            background-color: rgba(74, 111, 165, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: rgba(74, 111, 165, 0.1);
+            border-radius: 25px;
+            border: 1px solid rgba(74, 111, 165, 0.2);
+            background-clip: padding-box;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(74, 111, 165, 0.3);
+            background-clip: padding-box;
+        }
+
+        /* Tombol Logout merah */
+        .logout-btn-red {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .logout-btn-red:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 40px 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: white;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--dark);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background-clip: padding-box;
+        }
+
+        .back-btn:hover {
+            background: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Form Container */
+        .form-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideInUp 0.8s ease-out 0.2s both;
+            background-clip: padding-box;
+            border-left: 5px solid var(--accent);
+        }
+
+        .form-title {
+            font-size: 1.6rem;
+            margin-bottom: 25px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-title i {
+            color: var(--accent);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            background-clip: padding-box;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .form-control[readonly] {
+            background-color: #f8f9fa;
+            color: var(--gray);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+            background-clip: padding-box;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(74, 111, 165, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Table Container */
+        .table-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideInUp 0.8s ease-out 0.4s both;
+            background-clip: padding-box;
+            border-left: 5px solid var(--accent);
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .table-title {
+            font-size: 1.8rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .table-title i {
+            color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--primary);
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 12px 20px 12px 45px;
+            border: 2px solid var(--light-gray);
+            border-radius: 25px;
+            font-size: 1rem;
+            width: 280px;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            background-clip: padding-box;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary);
+        }
+
+        .sort-select {
+            padding: 12px 20px;
+            border: 2px solid var(--light-gray);
+            border-radius: 25px;
+            font-size: 1rem;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            background-clip: padding-box;
+        }
+
+        .sort-select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Table Styles */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 15px;
+            border: 1px solid rgba(74, 111, 165, 0.1);
+            max-height: 600px;
+            overflow-y: auto;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            background-clip: padding-box;
+        }
+
+        .chronology-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        .chronology-table th {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 18px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 1rem;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-clip: padding-box;
+        }
+
+        .chronology-table th:hover {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            transform: translateY(-2px);
+        }
+
+        .chronology-table th i {
+            margin-left: 8px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .chronology-table td {
+            padding: 18px;
+            border-bottom: 1px solid rgba(74, 111, 165, 0.1);
+            vertical-align: top;
+            transition: all 0.3s ease;
+            background-clip: padding-box;
+        }
+
+        .chronology-table tr {
+            transition: all 0.3s ease;
+            background-clip: padding-box;
+        }
+
+        .chronology-table tr:hover {
+            background: linear-gradient(135deg, rgba(74, 111, 165, 0.05), rgba(108, 155, 207, 0.05));
+            transform: translateX(5px);
+        }
+
+        .chronology-table tr:nth-child(even) {
+            background-color: rgba(74, 111, 165, 0.02);
+        }
+
+        .chronology-table tr:nth-child(even):hover {
+            background: linear-gradient(135deg, rgba(74, 111, 165, 0.08), rgba(108, 155, 207, 0.08));
+        }
+
+        /* HIGHLIGHT ROW - SAMA SEPERTI PUBLIC CHRONOLOGY */
+        .chronology-table tr.highlighted {
+            background: rgba(255, 243, 205, 0.7) !important;
+            border-left: 4px solid #f39c12;
+        }
+
+        .chronology-table tr.highlighted:hover {
+            background: rgba(255, 243, 205, 0.9) !important;
+        }
+
+        .chronology-table tr.highlighted:nth-child(even) {
+            background: rgba(255, 243, 205, 0.7) !important;
+        }
+
+        .chronology-table tr.highlighted:nth-child(even):hover {
+            background: rgba(255, 243, 205, 0.9) !important;
+        }
+
+        .timestamp {
+            font-size: 0.9rem;
+            color: var(--primary);
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .date {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .time {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .name {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 1.05rem;
+        }
+
+        .info {
+            max-width: 400px;
+            word-wrap: break-word;
+            line-height: 1.5;
+            color: var(--dark);
+        }
+
+        .location {
+            max-width: 200px;
+            word-wrap: break-word;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray);
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .edit-btn:hover {
+            color: var(--primary);
+            background: rgba(74, 111, 165, 0.1);
+        }
+
+        .delete-btn:hover {
+            color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px;
+            color: var(--gray);
+            font-style: italic;
+            font-size: 1.1rem;
+            background-clip: padding-box;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--primary);
+            font-size: 1.1rem;
+            background-clip: padding-box;
+        }
+
+        .error-state {
+            text-align: center;
+            padding: 30px;
+            color: #e74c3c;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(231, 76, 60, 0.05));
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid rgba(231, 76, 60, 0.2);
+            background-clip: padding-box;
+        }
+
+        .status-message {
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: 500;
+            background-clip: padding-box;
+        }
+
+        .status-success {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
+            color: #2e7d32;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .status-error {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(231, 76, 60, 0.05));
+            color: #c62828;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        /* Old Data Indicator */
+        .old-data-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff9800, #ff5722);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        /* Scrollbar styling */
+        .table-wrapper::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-track {
+            background: rgba(74, 111, 165, 0.1);
+            border-radius: 10px;
+            background-clip: padding-box;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            background-clip: padding-box;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .close-modal {
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .close-modal:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        #editChronologyForm {
+            padding: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .cancel-btn {
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #333;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .cancel-btn:hover {
+            background: #f5f5f5;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Compatibility improvements */
+        @supports not (background-clip: text) {
+            .nav-brand {
+                background: transparent;
+                color: var(--primary);
+            }
+            
+            .table-title i {
+                background: transparent;
+                color: var(--primary);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-content {
+                padding: 30px 20px;
+            }
+            
+            .form-container, .table-container {
+                padding: 25px;
+            }
+            
+            .table-controls {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .search-box input {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-nav {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-links {
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .nav-links a {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .back-btn {
+                align-self: stretch;
+                text-align: center;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 20px;
+            }
+
+            .table-title {
+                font-size: 1.5rem;
+                justify-content: center;
+            }
+
+            .chronology-table th,
+            .chronology-table td {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 20px 15px;
+            }
+
+            .form-container, .table-container {
+                padding: 20px;
+                border-radius: 15px;
+            }
+
+            .page-title {
+                font-size: 1.8rem;
+            }
+
+            .user-info .profile-info {
+                display: none;
+            }
+
+            .search-box input,
+            .sort-select {
+                padding: 10px 15px 10px 40px;
+                font-size: 0.9rem;
+            }
+
+            .search-icon {
+                left: 15px;
+            }
+
+            .actions {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .action-btn {
+                width: 32px;
+                height: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="floating-circle circle-1"></div>
+        <div class="floating-circle circle-2"></div>
+        <div class="floating-circle circle-3"></div>
+    </div>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-brand">EMT System</div>
+        <ul class="nav-links">
+            <li><a href="admin-dashboard.html">Dashboard</a></li>
+            <li><a href="admin-info.html">Incidents</a></li>
+            <li><a href="#" class="active">Chronology</a></li>
+            <li><a href="admin-ip.html">IP Status</a></li>
+            <li><a href="admin-pear.html">PEAR</a></li>
+        </ul>
+        <div class="user-section">
+            <div class="user-info" id="userInfo">
+                <!-- User info akan diisi oleh JavaScript -->
+            </div>
+            <button class="logout-btn-red" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Chronology Management</h1>
+            <button class="back-btn" onclick="goBackToAdminInfo()">
+                <i class="fas fa-arrow-left"></i> Back to Incident Details
+            </button>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessage" class="status-message"></div>
+
+        <!-- Selected Incident Info -->
+        <div class="form-container">
+            <div class="form-group">
+                <h3 style="color: var(--primary); margin-bottom: 15px;">
+                    <i class="fas fa-info-circle"></i> Selected Incident
+                </h3>
+                <div id="incidentInfo" class="form-control" style="background-color: #f0f7ff; font-weight: 500;">
+                    Loading incident information...
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Container -->
+        <div class="form-container">
+            <h2 class="form-title">
+                <i class="fas fa-plus-circle"></i> Add New Chronology Report
+            </h2>
+            
+            <form id="chronologyForm">
+                <div class="form-group">
+                    <label class="form-label">Report By</label>
+                    <input type="text" id="name" class="form-control" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="location" class="form-label">Location</label>
+                    <input type="text" id="location" class="form-control" placeholder="Enter incident location" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="info" class="form-label">Incident Information</label>
+                    <textarea id="info" class="form-control" placeholder="Provide detailed information about the incident..." required></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <i class="fas fa-paper-plane"></i> Submit Report
+                </button>
+            </form>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container">
+            <div class="table-header">
+                <h2 class="table-title">
+                    <i class="fas fa-history"></i> Chronology Reports for Selected Incident
+                </h2>
+                <div class="table-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchInput" placeholder="Search reports...">
+                    </div>
+                    <select class="sort-select" id="sortSelect">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="name">By Name</option>
+                        <option value="location">By Location</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-wrapper">
+                <table class="chronology-table">
+                    <thead>
+                        <tr>
+                            <th data-sort="timestamp">Last Updated</th>
+                            <th data-sort="name">Reported By</th>
+                            <th data-sort="info">Information</th>
+                            <th data-sort="location">Location</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTableBody">
+                        <tr>
+                            <td colspan="5" class="loading">
+                                <i class="fas fa-spinner fa-spin"></i> Loading chronology reports...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Chronology Report</h3>
+                <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="editChronologyForm">
+                <input type="hidden" id="editRecordId">
+                <input type="hidden" id="editSource">
+                <div class="form-group">
+                    <label for="editLocation" class="form-label">Location</label>
+                    <input type="text" id="editLocation" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="editInfo" class="form-label">Incident Information</label>
+                    <textarea id="editInfo" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="submit-btn" id="updateBtn">
+                        <i class="fas fa-save"></i> Update Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAL5PhLd1pLhppxnZBoZnZWvmsyUQnttOQ",
+            authDomain: "emt02-782e1.firebaseapp.com",
+            projectId: "emt02-782e1",
+            storageBucket: "emt02-782e1.firebasestorage.app",
+            messagingSenderId: "791132862958",
+            appId: "1:791132862958:web:8630b126f789c772ed76ff",
+            measurementId: "G-BRXT4D79SL"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const userInfo = document.getElementById('userInfo');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const chronologyForm = document.getElementById('chronologyForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const reportsTableBody = document.getElementById('reportsTableBody');
+        const searchInput = document.getElementById('searchInput');
+        const sortSelect = document.getElementById('sortSelect');
+        const editModal = document.getElementById('editModal');
+        const editChronologyForm = document.getElementById('editChronologyForm');
+        const updateBtn = document.getElementById('updateBtn');
+        const incidentInfo = document.getElementById('incidentInfo');
+
+        // Global variables
+        let currentUser = null;
+        let reports = [];
+        let currentIncidentId = null;
+        let currentIncidentData = null;
+        let chronologyListeners = [];
+
+        // Check if user is logged in
+        function checkUserLogin() {
+            const userData = localStorage.getItem('emtUserData');
+            
+            if (!userData) {
+                console.log('No user data in localStorage');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            try {
+                currentUser = JSON.parse(userData);
+                
+                if (currentUser.isGuest === true) {
+                    console.log('User is guest, redirecting...');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                if (!currentUser.name) {
+                    currentUser.name = currentUser.displayName || 
+                                     currentUser.username || 
+                                     "User";
+                    currentUser.position = currentUser.position || 
+                                          currentUser.emtRole || 
+                                          "User";
+                }
+                
+                displayUserProfile(currentUser);
+                document.getElementById('name').value = currentUser.name || '';
+                
+                // Clear public chronology filters
+                localStorage.removeItem('selectedDate');
+                localStorage.removeItem('selectedIncidentId');
+                
+                // Load incident dari URL atau localStorage
+                loadCurrentIncident();
+                
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                currentUser = {
+                    name: "Admin User",
+                    position: "System Administrator",
+                    emtRole: "EMT Admin",
+                    signedIn: true,
+                    isGuest: false
+                };
+                
+                localStorage.setItem('emtUserData', JSON.stringify(currentUser));
+                displayUserProfile(currentUser);
+                document.getElementById('name').value = currentUser.name;
+                
+                // Clear public chronology filters
+                localStorage.removeItem('selectedDate');
+                localStorage.removeItem('selectedIncidentId');
+                
+                // Load incident dari URL atau localStorage
+                loadCurrentIncident();
+            }
+        }
+
+        // Display user profile
+        function displayUserProfile(user) {
+            if (!user) {
+                user = {
+                    name: "User",
+                    position: "User"
+                };
+            }
+            
+            const userName = user.name || "User";
+            const userPosition = user.position || user.emtRole || "User";
+            const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase();
+            
+            userInfo.innerHTML = `
+                <div class="user-avatar">${initials}</div>
+                <div class="profile-info">
+                    <div style="font-weight: 600; font-size: 0.9rem;">${userName}</div>
+                    <div style="font-size: 0.8rem; color: var(--gray);">${userPosition}</div>
+                </div>
+            `;
+        }
+
+        // Load current incident - AUTO LOAD FORM
+        function loadCurrentIncident() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const incidentIdFromUrl = urlParams.get('incidentId');
+            
+            // Clean up existing listeners jika ada
+            cleanupListeners();
+            
+            // Priority: URL parameter > localStorage > sessionStorage
+            if (incidentIdFromUrl) {
+                currentIncidentId = incidentIdFromUrl;
+                // Save to localStorage untuk consistency
+                localStorage.setItem('currentIncidentId', currentIncidentId);
+            } else {
+                // Check localStorage
+                const storedIncidentId = localStorage.getItem('currentIncidentId');
+                if (storedIncidentId) {
+                    currentIncidentId = storedIncidentId;
+                } else {
+                    // No incident selected
+                    showStatus('⚠️ No incident selected. Please select an incident first.', 'error');
+                    incidentInfo.innerHTML = '<span style="color: #e74c3c;">No incident selected. Please select an incident from dashboard first.</span>';
+                    
+                    document.querySelectorAll('#chronologyForm input, #chronologyForm textarea, #chronologyForm button').forEach(el => {
+                        el.disabled = true;
+                    });
+                    return;
+                }
+            }
+            
+            console.log('Loading incident with ID:', currentIncidentId);
+            
+            // Load incident details from Firestore
+            db.collection('incidents').doc(currentIncidentId).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        currentIncidentData = doc.data();
+                        currentIncidentData.id = doc.id;
+                        
+                        // Display incident information
+                        incidentInfo.innerHTML = `
+                            <div style="margin-bottom: 5px;">
+                                <strong>${currentIncidentData.name || 'Unnamed Incident'}</strong>
+                            </div>
+                            <div style="font-size: 0.9rem; margin-bottom: 3px;">
+                                <i class="fas fa-calendar"></i> Date: ${currentIncidentData.date || 'N/A'}
+                            </div>
+                            <div style="font-size: 0.9rem; margin-bottom: 3px;">
+                                <i class="fas fa-map-marker-alt"></i> Location: ${currentIncidentData.location || 'N/A'}
+                            </div>
+                            <div style="font-size: 0.9rem; margin-bottom: 3px;">
+                                <i class="fas fa-tag"></i> Type: ${currentIncidentData.type || 'N/A'}
+                            </div>
+                            ${currentIncidentData.description ? 
+                                `<div style="font-size: 0.9rem; margin-top: 8px; padding-top: 8px; border-top: 1px solid #ddd;">
+                                    <i class="fas fa-file-alt"></i> Description: ${currentIncidentData.description}
+                                </div>` 
+                                : ''
+                            }
+                        `;
+                        
+                        // Enable form AUTO
+                        document.querySelectorAll('#chronologyForm input, #chronologyForm textarea, #chronologyForm button').forEach(el => {
+                            el.disabled = false;
+                        });
+                        
+                        // Load reports for this incident
+                        loadReports();
+                        
+                        // Setup real-time listeners untuk auto-update
+                        setupRealTimeListeners();
+                        
+                    } else {
+                        showStatus('❌ Incident not found', 'error');
+                        incidentInfo.innerHTML = '<span style="color: #e74c3c;">Incident not found. Please select a valid incident.</span>';
+                        
+                        // Disable form
+                        document.querySelectorAll('#chronologyForm input, #chronologyForm textarea, #chronologyForm button').forEach(el => {
+                            el.disabled = true;
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error loading incident:', error);
+                    showStatus('❌ Error loading incident', 'error');
+                    incidentInfo.innerHTML = '<span style="color: #e74c3c;">Error loading incident details. Please try again.</span>';
+                });
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message status-${type}`;
+            statusMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // Setup real-time listeners untuk auto-update
+        function setupRealTimeListeners() {
+            if (!currentIncidentId) return;
+            
+            console.log('Setting up real-time listeners for incident:', currentIncidentId);
+            
+            // Clean up existing listeners jika ada
+            cleanupListeners();
+            
+            // Listener untuk NEW collection (incidents/{incidentId}/chronology/)
+            const newChronologyListener = db.collection('incidents').doc(currentIncidentId)
+                .collection('chronology')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    console.log('Real-time update from NEW chronology collection');
+                    loadReports(); // Auto reload
+                }, (error) => {
+                    console.error('Error in new chronology listener:', error);
+                });
+            
+            chronologyListeners.push(newChronologyListener);
+            
+            // Listener untuk OLD collection (chronology/)
+            const oldChronologyListener = db.collection('chronology')
+                .where('incidentId', '==', currentIncidentId)
+                .orderBy('timestamp', 'desc')
+                .onSnapshot((snapshot) => {
+                    console.log('Real-time update from OLD chronology collection');
+                    loadReports(); // Auto reload
+                }, (error) => {
+                    console.error('Error in old chronology listener:', error);
+                });
+            
+            chronologyListeners.push(oldChronologyListener);
+            
+            console.log(`Setup ${chronologyListeners.length} real-time listeners for chronology`);
+        }
+
+        // Clean up listeners
+        function cleanupListeners() {
+            if (chronologyListeners.length > 0) {
+                console.log(`Cleaning up ${chronologyListeners.length} chronology listeners`);
+                chronologyListeners.forEach(unsubscribe => {
+                    if (typeof unsubscribe === 'function') {
+                        unsubscribe();
+                    }
+                });
+                chronologyListeners = [];
+            }
+        }
+
+        // Load reports for selected incident only - AUTO UPDATE
+        async function loadReports() {
+            if (!currentIncidentId) {
+                reportsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="no-data">
+                            <i class="fas fa-inbox"></i><br>
+                            Please select an incident first.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Set loading state
+            if (reportsTableBody.querySelector('.loading') || reportsTableBody.querySelector('.no-data') || reportsTableBody.querySelector('.error-state')) {
+                reportsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Loading chronology reports for selected incident...
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            try {
+                reports = [];
+                
+                // 1. Load from NEW subcollection (incidents/{incidentId}/chronology/)
+                const newSnapshot = await db.collection('incidents').doc(currentIncidentId)
+                    .collection('chronology')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                newSnapshot.forEach((doc) => {
+                    const report = doc.data();
+                    report.id = doc.id;
+                    report.source = 'new';
+                    report.incidentId = currentIncidentId;
+                    
+                    // Handle timestamp field
+                    if (!report.createdAt && report.timestamp) {
+                        report.createdAt = report.timestamp;
+                    }
+                    
+                    reports.push(report);
+                });
+                
+                console.log(`📊 Loaded ${newSnapshot.size} reports from NEW subcollection for incident ${currentIncidentId}`);
+                
+                // 2. Load from OLD main collection (chronology/) - ONLY for this incident
+                try {
+                    const oldSnapshot = await db.collection('chronology')
+                        .where('incidentId', '==', currentIncidentId)
+                        .orderBy('timestamp', 'desc')
+                        .get();
+                    
+                    oldSnapshot.forEach((doc) => {
+                        const report = doc.data();
+                        report.id = doc.id;
+                        report.source = 'old';
+                        report.incidentId = currentIncidentId;
+                        
+                        // Handle timestamp field
+                        if (!report.timestamp && report.createdAt) {
+                            report.timestamp = report.createdAt;
+                        }
+                        
+                        reports.push(report);
+                    });
+                    
+                    console.log(`📊 Loaded ${oldSnapshot.size} reports from OLD main collection for incident ${currentIncidentId}`);
+                    
+                } catch (error) {
+                    console.log('No old collection data found for this incident:', error.message);
+                }
+                
+                console.log(`📊 Total reports for incident ${currentIncidentId}: ${reports.length}`);
+                displayReports();
+                
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                reportsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="error-state">
+                            <i class="fas fa-exclamation-triangle"></i><br>
+                            Error loading chronology reports.
+                            <br><small>${error.message}</small>
+                        </td>
+                    </tr>
+                `;
+                showStatus('❌ Error loading chronology reports', 'error');
+            }
+        }
+
+        // Display reports with highlight for selected incident
+        function displayReports() {
+            if (reports.length === 0) {
+                reportsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="no-data">
+                            <i class="fas fa-inbox"></i><br>
+                            No chronology reports found for this incident.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Apply search filter
+            let filteredReports = reports;
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm) {
+                filteredReports = reports.filter(report => 
+                    (report.info && report.info.toLowerCase().includes(searchTerm)) ||
+                    (report.location && report.location.toLowerCase().includes(searchTerm)) ||
+                    (report.name && report.name.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            // Apply sorting
+            const sortBy = sortSelect.value;
+            filteredReports.sort((a, b) => {
+                let aTime, bTime;
+                
+                // Handle timestamp from both sources
+                if (a.createdAt) {
+                    aTime = a.createdAt.toDate();
+                } else if (a.timestamp) {
+                    aTime = a.timestamp.toDate();
+                } else {
+                    aTime = new Date(0);
+                }
+                
+                if (b.createdAt) {
+                    bTime = b.createdAt.toDate();
+                } else if (b.timestamp) {
+                    bTime = b.timestamp.toDate();
+                } else {
+                    bTime = new Date(0);
+                }
+                
+                switch(sortBy) {
+                    case 'newest':
+                        return bTime - aTime;
+                    case 'oldest':
+                        return aTime - bTime;
+                    case 'name':
+                        const aName = a.name?.toLowerCase() || '';
+                        const bName = b.name?.toLowerCase() || '';
+                        return aName.localeCompare(bName);
+                    case 'location':
+                        const aLoc = a.location?.toLowerCase() || '';
+                        const bLoc = b.location?.toLowerCase() || '';
+                        return aLoc.localeCompare(bLoc);
+                    default:
+                        return bTime - aTime; // Default newest first
+                }
+            });
+            
+            // Generate table rows
+            reportsTableBody.innerHTML = '';
+            filteredReports.forEach(report => {
+                const row = document.createElement('tr');
+                
+                // Highlight all rows since all belong to selected incident
+                row.classList.add('highlighted');
+                
+                // Format timestamp
+                let dateStr = 'N/A';
+                let timeStr = 'N/A';
+                let timestamp = report.createdAt || report.timestamp;
+                
+                if (timestamp) {
+                    try {
+                        const date = timestamp.toDate();
+                        dateStr = date.toLocaleDateString('en-MY', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        timeStr = date.toLocaleTimeString('en-MY', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true
+                        });
+                    } catch (error) {
+                        console.warn('Error formatting timestamp:', error);
+                    }
+                }
+                
+                // Check if data is from old collection
+                const isOldData = report.source === 'old';
+                const oldDataBadge = isOldData ? 
+                    '<div class="old-data-badge"><i class="fas fa-history"></i> Old System Data</div>' : 
+                    '';
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="timestamp date">${dateStr}</div>
+                        <div class="timestamp time">${timeStr}</div>
+                        ${oldDataBadge}
+                    </td>
+                    <td class="name">${report.name || 'Unknown Reporter'}</td>
+                    <td class="info">
+                        ${report.info || 'No detailed information provided'}
+                        ${isOldData ? '<div style="font-size:0.8rem;color:#666;font-style:italic;margin-top:5px;">(From old system structure)</div>' : ''}
+                    </td>
+                    <td class="location">${report.location || 'Location not specified'}</td>
+                    <td class="actions">
+                        <button class="action-btn edit-btn" title="Edit" onclick="editReport('${report.id}', '${report.source}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" title="Delete" onclick="deleteReport('${report.id}', '${report.source}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                reportsTableBody.appendChild(row);
+            });
+        }
+
+        // Submit form - save to NEW subcollection only - AUTO CLEAR FORM
+        chronologyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentIncidentId) {
+                showStatus('❌ No incident selected. Please select an incident first.', 'error');
+                return;
+            }
+            
+            const location = document.getElementById('location').value.trim();
+            const info = document.getElementById('info').value.trim();
+            const reportBy = document.getElementById('name').value.trim();
+            
+            if (!location) {
+                showStatus('❌ Please enter a location', 'error');
+                return;
+            }
+            
+            if (!info) {
+                showStatus('❌ Please enter incident information', 'error');
+                return;
+            }
+            
+            if (!reportBy) {
+                showStatus('❌ Report By cannot be empty', 'error');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            
+            try {
+                // Save to NEW subcollection only
+                await db.collection('incidents').doc(currentIncidentId)
+                    .collection('chronology')
+                    .add({
+                        name: reportBy,
+                        location: location,
+                        info: info,
+                        reportBy: reportBy,
+                        submittedBy: currentUser.userId || 'unknown',
+                        incidentId: currentIncidentId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                
+                // AUTO CLEAR FORM SETELAH SUBMIT
+                chronologyForm.reset();
+                document.getElementById('name').value = currentUser.name || '';
+                
+                showStatus('✅ Chronology report submitted successfully!', 'success');
+                // Real-time listener akan auto-update table
+                
+            } catch (error) {
+                console.error('Error submitting report:', error);
+                showStatus('❌ Error submitting report. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+            }
+        });
+
+        // Edit report with source detection
+        window.editReport = async (reportId, source) => {
+            if (!currentIncidentId) {
+                showStatus('❌ No incident selected', 'error');
+                return;
+            }
+            
+            try {
+                let doc;
+                
+                if (source === 'new') {
+                    // Edit from NEW subcollection
+                    doc = await db.collection('incidents').doc(currentIncidentId)
+                        .collection('chronology').doc(reportId).get();
+                } else {
+                    // Edit from OLD main collection
+                    doc = await db.collection('chronology').doc(reportId).get();
+                }
+                    
+                if (doc.exists) {
+                    const report = doc.data();
+                    
+                    // Fill edit form
+                    document.getElementById('editRecordId').value = reportId;
+                    document.getElementById('editSource').value = source;
+                    document.getElementById('editLocation').value = report.location || '';
+                    document.getElementById('editInfo').value = report.info || '';
+                    
+                    editModal.style.display = 'block';
+                } else {
+                    showStatus('❌ Record not found', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading record for edit:', error);
+                showStatus('❌ Error loading record', 'error');
+            }
+        };
+
+        // Close edit modal
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            editChronologyForm.reset();
+        }
+
+        // Handle edit form submission for both sources - AUTO UPDATE
+        editChronologyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const recordId = document.getElementById('editRecordId').value;
+            const source = document.getElementById('editSource').value;
+            const location = document.getElementById('editLocation').value.trim();
+            const info = document.getElementById('editInfo').value.trim();
+            
+            if (!currentIncidentId) {
+                showStatus('❌ No incident selected', 'error');
+                return;
+            }
+            
+            if (!location || !info) {
+                showStatus('❌ Please fill all fields', 'error');
+                return;
+            }
+            
+            updateBtn.disabled = true;
+            updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+            
+            try {
+                if (source === 'new') {
+                    // Update in NEW subcollection
+                    await db.collection('incidents').doc(currentIncidentId)
+                        .collection('chronology').doc(recordId)
+                        .update({
+                            location: location,
+                            info: info,
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                } else {
+                    // Update in OLD main collection
+                    await db.collection('chronology').doc(recordId)
+                        .update({
+                            location: location,
+                            info: info,
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                }
+                
+                showStatus('✅ Report updated successfully!', 'success');
+                closeEditModal();
+                // Real-time listener akan auto-update
+                
+            } catch (error) {
+                console.error('Error updating report:', error);
+                showStatus('❌ Failed to update report', 'error');
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.innerHTML = '<i class="fas fa-save"></i> Update Report';
+            }
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+        });
+
+        // Delete report with source detection - AUTO UPDATE
+        async function deleteReport(reportId, source) {
+            if (!currentIncidentId) {
+                showStatus('❌ No incident selected', 'error');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                if (source === 'new') {
+                    // Delete from NEW subcollection
+                    await db.collection('incidents').doc(currentIncidentId)
+                        .collection('chronology').doc(reportId).delete();
+                } else {
+                    // Delete from OLD main collection
+                    await db.collection('chronology').doc(reportId).delete();
+                }
+                    
+                showStatus('✅ Report deleted successfully!', 'success');
+                // Real-time listener akan auto-update
+                
+            } catch (error) {
+                console.error('Error deleting report:', error);
+                showStatus('❌ Error deleting report. Please try again.', 'error');
+            }
+        }
+
+        // Search functionality
+        searchInput.addEventListener('input', displayReports);
+        
+        // Sort functionality
+        sortSelect.addEventListener('change', displayReports);
+
+        // Table sorting functionality
+        document.querySelectorAll('.chronology-table th[data-sort]').forEach(header => {
+            header.addEventListener('click', () => {
+                const sortBy = header.getAttribute('data-sort');
+                sortSelect.value = sortBy;
+                displayReports();
+            });
+        });
+
+        // Go back to admin-info.html
+        function goBackToAdminInfo() {
+            // Clean up listeners sebelum redirect
+            cleanupListeners();
+            
+            if (currentIncidentId) {
+                window.location.href = `admin-info.html?incidentId=${currentIncidentId}`;
+            } else {
+                window.location.href = 'admin-dashboard.html';
+            }
+        }
+
+        // Logout functionality
+        logoutBtn.addEventListener('click', () => {
+            // Clean up listeners
+            cleanupListeners();
+            
+            localStorage.removeItem('emtUserData');
+            localStorage.removeItem('currentIncidentId');
+            localStorage.removeItem('selectedDate');
+            localStorage.removeItem('selectedIncidentId');
+            window.location.href = 'index.html';
+        });
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUserLogin();
+            
+            setTimeout(() => {
+                document.querySelectorAll('.chronology-table tr').forEach((row, index) => {
+                    row.style.animationDelay = `${index * 0.1}s`;
+                });
+            }, 1000);
+        });
+
+        // Clean up listeners bila page ditutup
+        window.addEventListener('beforeunload', function() {
+            cleanupListeners();
+        });
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && currentIncidentId) {
+                // Refresh data when page becomes visible
+                console.log('Page became visible, auto-refreshing data');
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === '/') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            
+            if (e.key === 'Escape') {
+                if (document.activeElement === searchInput) {
+                    searchInput.value = '';
+                    displayReports();
+                }
+                if (editModal.style.display === 'block') {
+                    closeEditModal();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

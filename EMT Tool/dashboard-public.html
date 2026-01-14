@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="floating-circle circle-1"></div>
+        <div class="floating-circle circle-2"></div>
+        <div class="floating-circle circle-3"></div>
+    </div>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-brand">EMT System</div>
+        <ul class="nav-links">
+            <li><a href="dashboard-public.html" class="active">Dashboard</a></li>
+        </ul>
+        <div class="user-section">
+            <a href="index.html?action=logout&from=public" class="home-btn" id="homeButton">
+                <i class="fas fa-home"></i> Home
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Public Dashboard <span class="live-badge">PUBLIC ACCESS</span></h1>
+            <p class="page-subtitle">View emergency management system incident records with public access.</p>
+        </div>
+
+        <!-- Incident Records Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-history"></i> Incident Records
+                </h2>
+                <div class="incident-controls">
+                    <!-- Sorting Options -->
+                    <div class="sorting-controls">
+                        <!-- Sorting calendar (date filter) -->
+                        <input type="date" id="dateFilter" class="sort-select" onchange="filterByDate()" 
+                               title="Filter by specific date">
+                        <button class="clear-filter-btn" onclick="clearDateFilter()" title="Clear date filter">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <select id="itemsPerPage" class="sort-select" onchange="loadIncidentRecords()">
+                            <option value="6">6 per page</option>
+                            <option value="10">10 per page</option>
+                            <option value="20">20 per page</option>
+                        </select>
+                        <select id="sortOrder" class="sort-select" onchange="loadIncidentRecords()">
+                            <option value="latest">Latest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
+                    </div>
+                    
+                    <div class="incident-actions">
+                        <button class="refresh-btn" onclick="loadIncidentRecords()" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="export-all-btn" onclick="exportAllToPDF()" title="Export All to PDF">
+                            <i class="fas fa-file-pdf"></i> Export All
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cards Container -->
+            <div class="incident-cards-container">
+                <div class="record-count" id="recordCount">Loading records...</div>
+                <div class="incident-cards-grid" id="incidentCardsContainer">
+                    <!-- Cards will be dynamically inserted here -->
+                    <div class="no-data-card">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading incidents...</p>
+                    </div>
+                </div>
+                
+                <!-- Pagination Navigation -->
+                <div class="pagination-container" id="paginationContainer">
+                    <!-- Pagination will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Public Notice Footer -->
+        <div class="public-notice">
+            <div class="notice-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="notice-content">
+                <h3>Public Access Notice</h3>
+                <p>This is a public viewing portal. All incident records shown here are for informational purposes only.</p>
+                <p>For administrative access or to report new incidents, please contact the system administrator.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAL5PhLd1pLhppxnZBoZnZWvmsyUQnttOQ",
+            authDomain: "emt02-782e1.firebaseapp.com",
+            projectId: "emt02-782e1",
+            storageBucket: "emt02-782e1.firebasestorage.app",
+            messagingSenderId: "791132862958",
+            appId: "1:791132862958:web:8630b126f789c772ed76ff",
+            measurementId: "G-BRXT4D79SL"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Current variables
+        let currentViewIncidentData = null;
+        let currentIncidentsData = [];
+        let allIncidentsData = [];
+        let currentPage = 1;
+        let itemsPerPage = 6;
+        let sortOrder = 'latest';
+        let currentDateFilter = '';
+
+        // No login check needed for public dashboard
+        function initializePublicDashboard() {
+            // Load initial records
+            loadIncidentRecords(1);
+            
+            // Setup event listeners
+            setupEventListeners();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Event delegation for view details buttons
+            document.addEventListener('click', function(e) {
+                // View Details button
+                if (e.target.closest('.view-card-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    
+                    const card = e.target.closest('.incident-card');
+                    if (card && card.dataset.incidentId) {
+                        const incidentId = card.dataset.incidentId;
+                        console.log('View Details clicked for incident:', incidentId);
+                        handleViewDetails(incidentId);
+                    }
+                    return false;
+                }
+                
+                // Download PDF button
+                if (e.target.closest('.download-card-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const card = e.target.closest('.incident-card');
+                    if (card && card.dataset.incidentId) {
+                        const incidentId = card.dataset.incidentId;
+                        downloadIncidentPDFDirect(incidentId);
+                    }
+                    return false;
+                }
+            }, true); // Use capture phase
+        }
+
+        // Format date to "DD Month YYYY"
+        function formatDateDisplay(date) {
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return date.toLocaleDateString('en-GB', options);
+        }
+
+        // Format date for table display (DD/MM/YYYY)
+        function formatDateForTable(date) {
+            if (!date) return 'N/A';
+            
+            // If date is already in DD/MM/YYYY format
+            if (typeof date === 'string' && date.includes('/')) {
+                return date;
+            }
+            
+            // If date is in YYYY-MM-DD format
+            if (typeof date === 'string' && date.includes('-')) {
+                const parts = date.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+            }
+            
+            // If it's a Date object
+            try {
+                const d = new Date(date);
+                if (isNaN(d.getTime())) return 'Invalid Date';
+                
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+            } catch (error) {
+                return 'Invalid Date';
+            }
+        }
+
+        // Capitalize first letter
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+        // Filter by date function
+        function filterByDate() {
+            currentDateFilter = document.getElementById('dateFilter').value;
+            applyFiltersAndPagination();
+        }
+
+        // Clear date filter
+        function clearDateFilter() {
+            document.getElementById('dateFilter').value = '';
+            currentDateFilter = '';
+            applyFiltersAndPagination();
+        }
+
+        // Load all incidents from database
+        async function loadAllIncidents() {
+            try {
+                const snapshot = await db.collection('incidents')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                allIncidentsData = [];
+                
+                if (snapshot.empty) {
+                    console.log('No incidents found in database');
+                    return;
+                }
+                
+                // Store all incidents
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    allIncidentsData.push({ 
+                        id: doc.id, 
+                        ...data,
+                        displayDate: data.date ? formatDateForTable(data.date) : 'N/A',
+                        originalDate: data.date
+                    });
+                });
+                
+                console.log(`Loaded ${allIncidentsData.length} incidents from database`);
+                
+            } catch (error) {
+                console.error('Error loading all incidents:', error);
+                throw error;
+            }
+        }
+
+        // Apply filters and pagination
+        function applyFiltersAndPagination(page = 1) {
+            currentPage = page;
+            
+            // Start with all incidents
+            let filteredData = [...allIncidentsData];
+            
+            // Apply date filter if selected
+            if (currentDateFilter) {
+                filteredData = filteredData.filter(incident => {
+                    return incident.originalDate === currentDateFilter;
+                });
+            }
+            
+            // Apply sorting
+            if (sortOrder === 'oldest') {
+                filteredData = [...filteredData].reverse();
+            }
+            
+            // Store filtered data
+            currentIncidentsData = filteredData;
+            
+            // Update display
+            updateIncidentDisplay();
+        }
+
+        // Update incident display with current filters
+        function updateIncidentDisplay() {
+            const container = document.getElementById('incidentCardsContainer');
+            const recordCount = document.getElementById('recordCount');
+            const paginationContainer = document.getElementById('paginationContainer');
+            
+            // Clear existing cards
+            container.innerHTML = '';
+            
+            if (currentIncidentsData.length === 0) {
+                container.innerHTML = `
+                    <div class="no-data-card">
+                        <i class="fas fa-inbox"></i>
+                        <p>No incidents found</p>
+                        ${currentDateFilter ? '<small>Try clearing date filter</small>' : ''}
+                    </div>
+                `;
+                recordCount.textContent = '0 records found';
+                paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            // Calculate pagination
+            const totalPages = Math.ceil(currentIncidentsData.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, currentIncidentsData.length);
+            const pageIncidents = currentIncidentsData.slice(startIndex, endIndex);
+            
+            // Display cards
+            pageIncidents.forEach((incident, index) => {
+                // Format timestamp
+                let timeString = 'N/A';
+                if (incident.createdAt) {
+                    try {
+                        const timestamp = incident.createdAt.toDate();
+                        timeString = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + 
+                                   ', ' + formatDateDisplay(timestamp);
+                    } catch (error) {
+                        console.error('Error formatting timestamp:', error);
+                    }
+                }
+                
+                const card = document.createElement('div');
+                card.className = 'incident-card';
+                card.dataset.incidentId = incident.id; // Store ID in data attribute
+                
+                card.innerHTML = `
+                    <div class="incident-card-header">
+                        <h3 class="incident-card-title">${incident.name || 'Unnamed Incident'}</h3>
+                        <span class="incident-timestamp">${timeString}</span>
+                    </div>
+                    
+                    <div class="incident-card-body">
+                        <div class="incident-detail-row">
+                            <span class="detail-label">Type:</span>
+                            <span class="type-badge ${incident.type || 'other'}">
+                                ${capitalizeFirstLetter(incident.type || 'Other')}
+                            </span>
+                        </div>
+                        
+                        <div class="incident-detail-row">
+                            <span class="detail-label">Fire Type:</span>
+                            <span class="fire-type-badge ${incident.fireType || 'real'}">
+                                ${capitalizeFirstLetter(incident.fireType || 'Real')}
+                            </span>
+                        </div>
+                        
+                        <div class="incident-detail-row">
+                            <span class="detail-label">Date:</span>
+                            <span class="detail-value">${incident.displayDate}</span>
+                        </div>
+                        
+                        <div class="incident-detail-row">
+                            <span class="detail-label">Location:</span>
+                            <span class="detail-value">${incident.location || 'N/A'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="incident-card-footer">
+                        <button class="view-card-btn" type="button">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            // Update record count with filter info
+            let countText = `${currentIncidentsData.length} records found`;
+            if (currentDateFilter) {
+                countText += ` (Filtered by date: ${formatDateForTable(currentDateFilter)})`;
+            }
+            recordCount.textContent = countText;
+            
+            // Create pagination
+            createPagination(totalPages);
+        }
+
+        // Load incident records
+        async function loadIncidentRecords(page = 1) {
+            try {
+                // Get sorting options
+                itemsPerPage = parseInt(document.getElementById('itemsPerPage').value) || 6;
+                sortOrder = document.getElementById('sortOrder').value || 'latest';
+                
+                // Load data if not already loaded
+                if (allIncidentsData.length === 0) {
+                    await loadAllIncidents();
+                }
+                
+                // Apply filters and pagination
+                applyFiltersAndPagination(page);
+                
+            } catch (error) {
+                console.error('Error loading incident records:', error);
+                const container = document.getElementById('incidentCardsContainer');
+                container.innerHTML = `
+                    <div class="no-data-card error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error loading incidents</p>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+                document.getElementById('recordCount').textContent = 'Error loading records';
+            }
+        }
+
+        // Create pagination navigation
+        function createPagination(totalPages) {
+            const paginationContainer = document.getElementById('paginationContainer');
+            
+            if (totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            let paginationHTML = '<div class="pagination">';
+            paginationHTML += '<span class="pagination-label">Page:</span> ';
+            
+            // Previous button
+            if (currentPage > 1) {
+                paginationHTML += `<span class="page-number" onclick="goToPage(${currentPage - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </span>`;
+            }
+            
+            // Show page numbers
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            // Adjust start page if we're at the end
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            // First page
+            if (startPage > 1) {
+                paginationHTML += `<span class="page-number" onclick="goToPage(1)">1</span>`;
+                if (startPage > 2) {
+                    paginationHTML += '<span class="page-ellipsis">...</span>';
+                }
+            }
+            
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `<span class="page-number ${currentPage === i ? 'active' : ''}" onclick="goToPage(${i})">${i}</span>`;
+            }
+            
+            // Last page
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += '<span class="page-ellipsis">...</span>';
+                }
+                paginationHTML += `<span class="page-number" onclick="goToPage(${totalPages})">${totalPages}</span>`;
+            }
+            
+            // Next button
+            if (currentPage < totalPages) {
+                paginationHTML += `<span class="page-number" onclick="goToPage(${currentPage + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </span>`;
+            }
+            
+            paginationHTML += '</div>';
+            paginationContainer.innerHTML = paginationHTML;
+        }
+
+        // Go to specific page
+        function goToPage(page) {
+            if (page !== currentPage) {
+                applyFiltersAndPagination(page);
+            }
+        }
+
+        // Handle View Details - FIXED VERSION
+        function handleViewDetails(incidentId) {
+            console.log('Processing view details for:', incidentId);
+            
+            // Validate incident ID
+            if (!incidentId || incidentId === 'undefined') {
+                console.error('Invalid incident ID');
+                alert('Error: Invalid incident ID');
+                return;
+            }
+            
+            // Store in multiple places for reliability
+            localStorage.setItem('currentViewIncidentId', incidentId);
+            sessionStorage.setItem('lastViewedIncident', incidentId);
+            
+            // Verify storage
+            const storedId = localStorage.getItem('currentViewIncidentId');
+            console.log('Stored ID verification:', storedId);
+            
+            if (storedId === incidentId) {
+                console.log('Redirecting to public-info.html');
+                
+                // Use location.assign (more reliable than href)
+                window.location.assign("public-info.html");
+                
+                // Prevent any further execution
+                return false;
+            } else {
+                console.error('Storage verification failed');
+                // Fallback: use URL parameter
+                window.location.href = "public-info.html?incidentId=" + encodeURIComponent(incidentId);
+            }
+            
+            return false;
+        }
+
+        // Download incident PDF directly
+        async function downloadIncidentPDFDirect(incidentId) {
+            try {
+                console.log('Downloading PDF for incident:', incidentId);
+                
+                const doc = await db.collection('incidents').doc(incidentId).get();
+                
+                if (!doc.exists) {
+                    alert('Incident not found');
+                    return;
+                }
+                
+                const data = doc.data();
+                currentViewIncidentData = { id: doc.id, ...data };
+                
+                // Download PDF
+                downloadIncidentPDFTable();
+                
+            } catch (error) {
+                console.error('Error downloading incident PDF:', error);
+                alert('Error downloading PDF. Please try again.');
+            }
+        }
+
+        // Export all incidents to PDF
+        async function exportAllToPDF() {
+            if (currentIncidentsData.length === 0) {
+                alert('No incidents to export');
+                return;
+            }
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('landscape');
+                
+                // Set PDF properties
+                doc.setProperties({
+                    title: 'All Incident Records',
+                    subject: 'EMT Incident Records',
+                    author: 'EMT System'
+                });
+                
+                // Add header
+                doc.setFontSize(20);
+                doc.setTextColor(40, 40, 40);
+                doc.text('ALL INCIDENT RECORDS REPORT', 148, 20, null, null, 'center');
+                
+                doc.setFontSize(12);
+                doc.setTextColor(100, 100, 100);
+                doc.text('Emergency Management Team System - Public Portal', 148, 28, null, null, 'center');
+                
+                // Date information
+                doc.setFontSize(10);
+                doc.text(`Total Records: ${currentIncidentsData.length}`, 20, 38);
+                doc.text(`Generated on: ${formatDateDisplay(new Date())}`, 20, 44);
+                
+                // Add filter info if applied
+                if (currentDateFilter) {
+                    doc.text(`Filtered by date: ${formatDateForTable(currentDateFilter)}`, 20, 50);
+                }
+                
+                // Add line separator
+                doc.setDrawColor(200, 200, 200);
+                doc.line(20, 55, 277, 55);
+                
+                // Prepare table data
+                const tableData = currentIncidentsData.map((incident, index) => {
+                    let dateStr = 'N/A';
+                    if (incident.date) {
+                        dateStr = formatDateForTable(incident.date);
+                    }
+                    
+                    return [
+                        index + 1,
+                        incident.name || 'Unnamed Incident',
+                        capitalizeFirstLetter(incident.type || 'Other'),
+                        capitalizeFirstLetter(incident.fireType || 'Real'),
+                        dateStr,
+                        incident.location || 'N/A',
+                        incident.createdBy || 'Admin User'
+                    ];
+                });
+                
+                // Create table using autoTable plugin
+                doc.autoTable({
+                    startY: 60,
+                    head: [['No.', 'Incident Name', 'Type', 'Fire Type', 'Date', 'Location', 'Created By']],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [93, 156, 236],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 10
+                    },
+                    bodyStyles: {
+                        fontSize: 9
+                    },
+                    alternateRowStyles: {
+                        fillColor: [248, 251, 255]
+                    },
+                    styles: {
+                        cellPadding: 4,
+                        fontSize: 9,
+                        valign: 'middle'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 15 },
+                        1: { cellWidth: 50 },
+                        2: { cellWidth: 30 },
+                        3: { cellWidth: 30 },
+                        4: { cellWidth: 30 },
+                        5: { cellWidth: 50 },
+                        6: { cellWidth: 40 }
+                    },
+                    margin: { left: 20, right: 20 }
+                });
+                
+                // Add footer
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text(`Page ${i} of ${pageCount}`, 148, 205, null, null, 'center');
+                    doc.text(`Public Access Report - EMT System`, 148, 210, null, null, 'center');
+                }
+                
+                // Download PDF
+                const fileName = `Public_Incident_Records_${new Date().getTime()}.pdf`;
+                doc.save(fileName);
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF report. Please try again.');
+            }
+        }
+
+        // Download Incident as PDF (table format for single incident)
+        function downloadIncidentPDFTable() {
+            if (!currentViewIncidentData) return;
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Get incident data
+                const data = currentViewIncidentData;
+                
+                // Format date
+                let displayDate = 'N/A';
+                if (data.createdAt) {
+                    const timestamp = data.createdAt.toDate();
+                    displayDate = formatDateDisplay(timestamp);
+                }
+                
+                // Set PDF properties
+                doc.setProperties({
+                    title: `Incident Report - ${data.name}`,
+                    subject: 'EMT Incident Report',
+                    author: 'EMT System'
+                });
+                
+                // Add header
+                doc.setFontSize(20);
+                doc.setTextColor(40, 40, 40);
+                doc.text('INCIDENT REPORT', 105, 20, null, null, 'center');
+                
+                doc.setFontSize(12);
+                doc.setTextColor(100, 100, 100);
+                doc.text('Emergency Management Team System - Public Portal', 105, 30, null, null, 'center');
+                
+                // Add line separator
+                doc.setDrawColor(200, 200, 200);
+                doc.line(20, 35, 190, 35);
+                
+                // Incident Details Table
+                const tableData = [
+                    ['Incident Name:', data.name || 'Not specified'],
+                    ['Type:', data.type || 'Not specified'],
+                    ['Fire Type:', capitalizeFirstLetter(data.fireType || 'Real')],
+                    ['Date:', data.date ? formatDateForTable(data.date) : 'Not specified'],
+                    ['Location:', data.location || 'Not specified'],
+                    ['Created By:', data.createdBy || 'Admin User']
+                ];
+                
+                // Create table
+                doc.autoTable({
+                    startY: 45,
+                    head: [['Field', 'Value']],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [93, 156, 236],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 11
+                    },
+                    bodyStyles: {
+                        fontSize: 10
+                    },
+                    styles: {
+                        cellPadding: 5,
+                        fontSize: 10,
+                        valign: 'middle'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 50, fontStyle: 'bold' },
+                        1: { cellWidth: 120 }
+                    },
+                    margin: { left: 20, right: 20 }
+                });
+                
+                // Description section
+                const finalY = doc.lastAutoTable.finalY + 15;
+                doc.setFontSize(14);
+                doc.setTextColor(60, 60, 60);
+                doc.text('Description', 20, finalY);
+                
+                doc.setFontSize(11);
+                doc.setTextColor(80, 80, 80);
+                
+                // Split description into lines
+                const description = data.description || 'No description provided';
+                const splitDescription = doc.splitTextToSize(description, 170);
+                doc.text(splitDescription, 20, finalY + 10);
+                
+                // Add footer
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(10);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text(`Page ${i} of ${pageCount}`, 105, 285, null, null, 'center');
+                    doc.text(`Generated on: ${formatDateDisplay(new Date())}`, 105, 290, null, null, 'center');
+                }
+                
+                // Download PDF
+                doc.save(`Incident_Report_${data.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.pdf`);
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF. Please try again.');
+            }
+        }
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard loaded, initializing...');
+            initializePublicDashboard();
+            
+            // Reset date filter
+            document.getElementById('dateFilter').value = '';
+            
+            // Add CSS to prevent event issues
+            const style = document.createElement('style');
+            style.textContent = `
+                .view-card-btn, .download-card-btn {
+                    cursor: pointer !important;
+                    position: relative;
+                    z-index: 10;
+                }
+                .incident-card-footer {
+                    position: relative;
+                    z-index: 5;
+                }
+                .home-btn {
+                    cursor: pointer !important;
+                }
+            `;
+            document.head.appendChild(style);
+        });
+
+        // Prevent any accidental form submissions
+        document.addEventListener('submit', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    </script>
+
+    <style>
+        /* Top Navigation */
+        .top-nav {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 18px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--dark);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            background-clip: padding-box;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transition: left 0.3s ease;
+            z-index: -1;
+            background-clip: padding-box;
+        }
+
+        .nav-links a.active {
+            color: white;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
+
+        .nav-links a.active::before {
+            left: 0;
+        }
+
+        .nav-links a:hover:not(.active) {
+            background-color: rgba(74, 111, 165, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .home-btn {
+            background: linear-gradient(135deg, #4a6fa5, #6c9bcf);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
+
+        .home-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(74, 111, 165, 0.4);
+            background: linear-gradient(135deg, #6c9bcf, #7ba7d9);
+            text-decoration: none;
+        }
+
+        /* Public Notice Styling */
+        .public-notice {
+            background: linear-gradient(135deg, #f8fbff 0%, #e8f2ff 100%);
+            border: 2px solid #5d9cec;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .notice-icon {
+            background: #5d9cec;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .notice-content h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+        
+        .notice-content p {
+            margin: 5px 0;
+            color: #5d6d7e;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        /* Incident Controls */
+        .incident-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .sorting-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .incident-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        /* Date Picker in Sorting Controls */
+        #dateFilter {
+            padding: 10px 16px;
+            border: 2px solid #e8f2ff;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            background: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(93, 156, 236, 0.1);
+            font-weight: 500;
+            min-width: 150px;
+            cursor: pointer;
+        }
+        
+        #dateFilter:focus {
+            outline: none;
+            border-color: #5d9cec;
+            box-shadow: 0 0 0 3px rgba(93, 156, 236, 0.2);
+        }
+        
+        /* Clear Filter Button */
+        .clear-filter-btn {
+            padding: 10px 12px;
+            background: linear-gradient(135deg, #ffce54 0%, #f6bb42 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(246, 187, 66, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .clear-filter-btn:hover {
+            background: linear-gradient(135deg, #f6bb42 0%, #e6a931 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(246, 187, 66, 0.3);
+        }
+        
+        .sort-select {
+            padding: 10px 16px;
+            border: 2px solid #e8f2ff;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            background: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(93, 156, 236, 0.1);
+            font-weight: 500;
+            min-width: 120px;
+            cursor: pointer;
+        }
+        
+        .sort-select:focus {
+            outline: none;
+            border-color: #5d9cec;
+            box-shadow: 0 0 0 3px rgba(93, 156, 236, 0.2);
+        }
+        
+        /* Incident Cards Container */
+        .incident-cards-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 6px 25px rgba(93, 156, 236, 0.1);
+            border: 1px solid #e8f2ff;
+            margin-top: 20px;
+        }
+        
+        .record-count {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e8f2ff;
+        }
+        
+        /* Incident Cards Grid */
+        .incident-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            min-height: 300px;
+        }
+        
+        /* Incident Card Styling */
+        .incident-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e8f2ff;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(93, 156, 236, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+        
+        .incident-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(93, 156, 236, 0.2);
+            border-color: #5d9cec;
+        }
+        
+        .incident-card-header {
+            background: linear-gradient(135deg, #f8fbff 0%, #e8f2ff 100%);
+            padding: 20px;
+            border-bottom: 1px solid #e8f2ff;
+        }
+        
+        .incident-card-title {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        
+        .incident-timestamp {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-weight: 500;
+            display: block;
+        }
+        
+        .incident-card-body {
+            padding: 20px;
+            flex-grow: 1;
+        }
+        
+        .incident-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #e8f2ff;
+        }
+        
+        .incident-detail-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-size: 0.9rem;
+            color: #5d9cec;
+            font-weight: 600;
+        }
+        
+        .detail-value {
+            font-size: 0.95rem;
+            color: #2c3e50;
+            font-weight: 600;
+            text-align: right;
+            max-width: 60%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Type Badges */
+        .type-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 70px;
+        }
+        
+        .type-badge.fire {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+        }
+        
+        .type-badge.medical {
+            background: linear-gradient(135deg, #48cfad 0%, #37bc9b 100%);
+            color: white;
+        }
+        
+        .type-badge.hazmat {
+            background: linear-gradient(135deg, #ffce54 0%, #f6bb42 100%);
+            color: white;
+        }
+        
+        .type-badge.security {
+            background: linear-gradient(135deg, #ac92ec 0%, #967adc 100%);
+            color: white;
+        }
+        
+        .type-badge.weather {
+            background: linear-gradient(135deg, #4fc1e9 0%, #3bafda 100%);
+            color: white;
+        }
+        
+        .type-badge.other {
+            background: linear-gradient(135deg, #a0d468 0%, #8cc152 100%);
+            color: white;
+        }
+        
+        /* Fire Type Badges */
+        .fire-type-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 60px;
+        }
+        
+        .fire-type-badge.real {
+            background: linear-gradient(135deg, #ed5565 0%, #da4453 100%);
+            color: white;
+        }
+        
+        .fire-type-badge.drill {
+            background: linear-gradient(135deg, #5d9cec 0%, #4a89dc 100%);
+            color: white;
+        }
+        
+        .incident-card-footer {
+            padding: 20px;
+            background: #f9fcff;
+            border-top: 1px solid #e8f2ff;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .view-card-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #5d9cec 0%, #4a89dc 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .view-card-btn:hover {
+            background: linear-gradient(135deg, #4a89dc 0%, #3a79cc 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(93, 156, 236, 0.3);
+        }
+        
+        .download-card-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #48cfad 0%, #37bc9b 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .download-card-btn:hover {
+            background: linear-gradient(135deg, #3ec29d 0%, #2fa786 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 207, 173, 0.3);
+        }
+        
+        /* No Data Card */
+        .no-data-card {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+            background: #f9fcff;
+            border-radius: 12px;
+            border: 2px dashed #e8f2ff;
+        }
+        
+        .no-data-card i {
+            font-size: 3rem;
+            color: #bdc3c7;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        .no-data-card p {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        .no-data-card.error {
+            color: #e74c3c;
+            background: #fff5f5;
+            border-color: #ffcccc;
+        }
+        
+        .no-data-card.error i {
+            color: #e74c3c;
+        }
+        
+        /* Pagination */
+        .pagination-container {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e8f2ff;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .pagination-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-right: 10px;
+        }
+        
+        .page-number {
+            padding: 8px 16px;
+            background: #f0f7ff;
+            color: #5d9cec;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .page-number:hover {
+            background: #5d9cec;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(93, 156, 236, 0.3);
+        }
+        
+        .page-number.active {
+            background: linear-gradient(135deg, #5d9cec 0%, #4a89dc 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(93, 156, 236, 0.3);
+            border-color: #5d9cec;
+        }
+        
+        .page-ellipsis {
+            padding: 8px 8px;
+            color: #7f8c8d;
+            font-weight: 600;
+        }
+        
+        /* Pagination icon buttons */
+        .page-number i {
+            font-size: 0.8rem;
+        }
+        
+        /* Refresh and Export Buttons */
+        .refresh-btn {
+            padding: 12px 14px;
+            background: linear-gradient(135deg, #ffce54 0%, #f6bb42 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(246, 187, 66, 0.2);
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px) rotate(15deg);
+            box-shadow: 0 6px 15px rgba(246, 187, 66, 0.3);
+            background: linear-gradient(135deg, #f6bb42 0%, #e6a931 100%);
+        }
+        
+        .export-all-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #ed5565 0%, #da4453 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(237, 85, 101, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .export-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(237, 85, 101, 0.3);
+            background: linear-gradient(135deg, #da4453 0%, #c33443 100%);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .top-nav {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 20px;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            
+            .nav-links a {
+                font-size: 0.85rem;
+                padding: 6px 12px;
+            }
+            
+            .incident-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+            
+            .sorting-controls {
+                flex-direction: column;
+            }
+            
+            .incident-actions {
+                justify-content: center;
+            }
+            
+            .incident-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .incident-card {
+                max-width: 100%;
+            }
+            
+            .pagination {
+                gap: 5px;
+            }
+            
+            .page-number {
+                padding: 6px 12px;
+                min-width: 35px;
+                font-size: 0.85rem;
+            }
+            
+            #dateFilter {
+                min-width: 100%;
+            }
+            
+            .sort-select {
+                min-width: 100%;
+            }
+            
+            .clear-filter-btn {
+                min-width: 100%;
+            }
+            
+            .public-notice {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+        }
+    </style>
+</body>
+</html>

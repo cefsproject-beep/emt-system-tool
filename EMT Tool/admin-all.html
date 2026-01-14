@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMT System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #6c9bcf;
+            --accent: #7ba7d9;
+            --success: #6cceb6;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --card-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #a8c0ff 0%, #3f4c6b 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-attachment: fixed;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .circle-1 {
+            width: 100px;
+            height: 100px;
+            top: 15%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .circle-2 {
+            width: 150px;
+            height: 150px;
+            top: 65%;
+            right: 8%;
+            animation-delay: 2s;
+        }
+
+        .circle-3 {
+            width: 80px;
+            height: 80px;
+            bottom: 25%;
+            left: 15%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-25px) rotate(180deg);
+                opacity: 0.3;
+            }
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 18px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--dark);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            background-clip: padding-box;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transition: left 0.3s ease;
+            z-index: -1;
+            background-clip: padding-box;
+        }
+
+        .nav-links a.active {
+            color: white;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
+
+        .nav-links a.active::before {
+            left: 0;
+        }
+
+        .nav-links a:hover:not(.active) {
+            background-color: rgba(74, 111, 165, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: rgba(74, 111, 165, 0.1);
+            border-radius: 25px;
+            border: 1px solid rgba(74, 111, 165, 0.2);
+            background-clip: padding-box;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(74, 111, 165, 0.3);
+            background-clip: padding-box;
+        }
+
+        .admin-avatar {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 40px 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: white;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
+        }
+
+        .date-display-main {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-top: 10px;
+            background: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid rgba(74, 111, 165, 0.2);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Incident Container - NEW LAYOUT */
+        .incident-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideInUp 0.8s ease-out;
+            background-clip: padding-box;
+            border-left: 5px solid var(--accent);
+        }
+
+        .incident-container .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark);
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .section-title i {
+            color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--primary);
+        }
+
+        /* Boxes Grid Layout */
+        .boxes-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .boxes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Box Styling */
+        .info-box {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(74, 111, 165, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-box:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+            border-color: var(--accent);
+        }
+
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(74, 111, 165, 0.1);
+        }
+
+        .box-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .box-title i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .manage-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(74, 111, 165, 0.2);
+        }
+
+        .manage-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+        }
+
+        /* Info Grid Inside Box */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            flex-grow: 1;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 12px 15px;
+            background: rgba(74, 111, 165, 0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(74, 111, 165, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .info-row:hover {
+            background: rgba(74, 111, 165, 0.07);
+            border-color: rgba(74, 111, 165, 0.1);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.9rem;
+            min-width: 140px;
+        }
+
+        .info-value {
+            flex: 1;
+            color: var(--dark);
+            font-weight: 500;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .info-value.empty {
+            color: var(--gray);
+            font-style: italic;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            min-width: 100px;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-badge-online {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+
+        .status-badge-offline {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .status-badge-maintenance {
+            background: linear-gradient(135deg, #f39c12 0%, #d35400 100%);
+        }
+
+        .status-badge-warning {
+            background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
+        }
+
+        .status-badge-unknown {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+
+        /* IP ID Badge */
+        .ip-id-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            background: rgba(74, 111, 165, 0.1);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--dark);
+            border: 1px solid rgba(74, 111, 165, 0.2);
+        }
+
+        /* Incident Details (Box 1) Specific */
+        .incident-details .info-row {
+            background: rgba(74, 111, 165, 0.05);
+        }
+
+        /* Pagination INSIDE CARD */
+        .pagination-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(74, 111, 165, 0.1);
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .pagination-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-right: 10px;
+        }
+
+        .page-number {
+            padding: 10px 16px;
+            background: rgba(74, 111, 165, 0.1);
+            color: var(--primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+            border: 2px solid transparent;
+        }
+
+        .page-number:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(74, 111, 165, 0.3);
+        }
+
+        .page-number.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+            border-color: var(--primary);
+        }
+
+        .page-next {
+            padding: 10px 16px;
+            background: rgba(74, 111, 165, 0.1);
+            color: var(--primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-next:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(74, 111, 165, 0.3);
+        }
+
+        /* Table Controls */
+        .table-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .record-count {
+            font-size: 0.85rem;
+            color: var(--gray);
+            background: var(--light);
+            padding: 8px 15px;
+            border-radius: 25px;
+            border: 1px solid var(--light-gray);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .refresh-btn {
+            padding: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(74, 111, 165, 0.4);
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* No Data Styling */
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray);
+            font-style: italic;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.9));
+            border-radius: 15px;
+            grid-column: 1 / -1;
+        }
+
+        .no-data i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            display: block;
+            color: var(--primary);
+        }
+
+        .no-data.error {
+            color: #e74c3c;
+        }
+
+        .no-data.error i {
+            color: #e74c3c;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .incident-container {
+                padding: 25px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .boxes-grid {
+                gap: 15px;
+            }
+            
+            .info-box {
+                padding: 20px;
+            }
+            
+            .info-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .info-label {
+                min-width: auto;
+                width: 100%;
+            }
+            
+            .info-value {
+                text-align: left;
+                width: 100%;
+            }
+            
+            .pagination {
+                gap: 5px;
+            }
+            
+            .page-number {
+                padding: 8px 14px;
+                min-width: 35px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 20px 15px;
+            }
+            
+            .incident-container {
+                padding: 20px;
+                border-radius: 15px;
+            }
+            
+            .page-title {
+                font-size: 1.8rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .box-title {
+                font-size: 1.1rem;
+            }
+            
+            .manage-btn {
+                padding: 8px 15px;
+                font-size: 0.85rem;
+            }
+            
+            .pagination-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="floating-circle circle-1"></div>
+        <div class="floating-circle circle-2"></div>
+        <div class="floating-circle circle-3"></div>
+    </div>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-brand">EMT System</div>
+        <ul class="nav-links">
+            <li><a href="admin-dashboard.html">Dashboard</a></li>
+            <li><a href="admin-all.html" class="active">All</a></li>
+            <li><a href="admin-chronology.html">Chronology</a></li>
+            <li><a href="admin-ip.html">IP Status</a></li>
+            <li><a href="admin-pear.html">PEAR</a></li>
+        </ul>
+        <div class="user-section">
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar admin-avatar">
+                    AD
+                </div>
+                <div class="profile-info">
+                    <div style="font-weight: 600; font-size: 0.9rem;">Admin User</div>
+                    <div style="font-size: 0.8rem; color: var(--gray);">System Administrator | EMT Admin</div>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">All Incidents & Status</h1>
+            <div id="currentDateDisplay" class="date-display-main">Loading...</div>
+        </div>
+
+        <!-- Incident Container (Dynamic) -->
+        <div id="incidentContainer">
+            <!-- Incident data will be loaded here dynamically -->
+        </div>
+
+        <!-- Pagination Card -->
+        <div id="paginationCard" class="pagination-card" style="display: none;">
+            <div class="pagination-container">
+                <!-- Pagination will be loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAL5PhLd1pLhppxnZBoZnZWvmsyUQnttOQ",
+            authDomain: "emt02-782e1.firebaseapp.com",
+            projectId: "emt02-782e1",
+            storageBucket: "emt02-782e1.firebasestorage.app",
+            messagingSenderId: "791132862958",
+            appId: "1:791132862958:web:8630b126f789c772ed76ff",
+            measurementId: "G-BRXT4D79SL"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Global variables
+        let allIncidentsData = [];
+        let currentPage = 1;
+        const itemsPerPage = 1; // One incident per page (with all 4 boxes)
+        const MAX_INCIDENTS_TODAY = 10; // Maksimum 10 incidents untuk hari ini
+
+        // FIX: Check admin access - JANGAN redirect ke index.html
+        function checkAdminAccess() {
+            const userData = localStorage.getItem('emtUserData');
+            
+            if (!userData) {
+                // Create admin user data jika tiada
+                const mockUser = {
+                    name: "Admin User",
+                    position: "System Administrator",
+                    emtRole: "EMT Admin",
+                    signedIn: true,
+                    isGuest: false
+                };
+                localStorage.setItem('emtUserData', JSON.stringify(mockUser));
+                displayUserProfile(mockUser);
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(userData);
+                displayUserProfile(user);
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                // JANGAN redirect ke index.html, tetap di halaman ini
+                const mockUser = {
+                    name: "Admin User",
+                    position: "System Administrator",
+                    emtRole: "EMT Admin",
+                    signedIn: true,
+                    isGuest: false
+                };
+                localStorage.setItem('emtUserData', JSON.stringify(mockUser));
+                displayUserProfile(mockUser);
+            }
+        }
+
+        // Display user profile
+        function displayUserProfile(user) {
+            const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'AD';
+            
+            document.getElementById('userInfo').innerHTML = `
+                <div class="user-avatar admin-avatar">
+                    ${initials}
+                </div>
+                <div class="profile-info">
+                    <div style="font-weight: 600; font-size: 0.9rem;">${user.name}</div>
+                    <div style="font-size: 0.8rem; color: var(--gray);">${user.position} | ${user.emtRole}</div>
+                </div>
+            `;
+        }
+
+        // Logout function - tetap ke index.html bila logout sahaja
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('emtUserData');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Format date as "DD Month YYYY"
+        function formatDateDisplay(date) {
+            return date.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            }).replace(',', '');
+        }
+
+        // Format time as "HH:MM" (24-hour format)
+        function formatTimeDisplay(timestamp) {
+            if (!timestamp) return 'N/A';
+            
+            try {
+                const date = timestamp.toDate();
+                return date.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+            } catch (error) {
+                console.warn('Error formatting timestamp to time:', error);
+                return 'N/A';
+            }
+        }
+
+        // Capitalize first letter
+        function capitalizeFirstLetter(string) {
+            return string ? string.charAt(0).toUpperCase() + string.slice(1) : '';
+        }
+
+        // Get status badge class based on status
+        function getStatusBadgeClass(status) {
+            const statusValue = (status || '').toLowerCase();
+            switch(statusValue) {
+                case 'online':
+                case 'active':
+                    return 'status-badge-online';
+                case 'offline':
+                case 'down':
+                    return 'status-badge-offline';
+                case 'maintenance':
+                    return 'status-badge-maintenance';
+                case 'warning':
+                    return 'status-badge-warning';
+                default:
+                    return 'status-badge-unknown';
+            }
+        }
+
+        // Get status icon based on status
+        function getStatusIcon(status) {
+            const statusValue = (status || '').toLowerCase();
+            switch(statusValue) {
+                case 'online':
+                case 'active':
+                    return 'fa-check-circle';
+                case 'offline':
+                case 'down':
+                    return 'fa-times-circle';
+                case 'maintenance':
+                    return 'fa-tools';
+                case 'warning':
+                    return 'fa-exclamation-triangle';
+                default:
+                    return 'fa-question-circle';
+            }
+        }
+
+        // Check if incident is from today
+        function isIncidentToday(incident) {
+            if (!incident.createdAt) return false;
+            
+            try {
+                const incidentDate = incident.createdAt.toDate();
+                const today = new Date();
+                
+                return incidentDate.getDate() === today.getDate() &&
+                       incidentDate.getMonth() === today.getMonth() &&
+                       incidentDate.getFullYear() === today.getFullYear();
+            } catch (error) {
+                console.warn('Error checking incident date:', error);
+                return false;
+            }
+        }
+
+        // Load incidents for TODAY ONLY
+        async function loadTodayIncidents(page = 1) {
+            try {
+                console.log('🔄 Loading incidents for TODAY only...');
+                currentPage = page;
+                
+                // Get all incidents ordered by timestamp (latest first)
+                const snapshot = await db.collection('incidents')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                allIncidentsData = [];
+                
+                if (snapshot.empty) {
+                    console.log('ℹ️ No incidents found');
+                    displayNoDataToday();
+                    hidePagination();
+                    return;
+                }
+
+                // Filter incidents - ONLY TODAY'S incidents
+                snapshot.forEach((doc) => {
+                    const incident = doc.data();
+                    incident.id = doc.id;
+                    
+                    if (isIncidentToday(incident)) {
+                        allIncidentsData.push(incident);
+                    }
+                });
+
+                // Limit to maximum 10 incidents as requested
+                if (allIncidentsData.length > MAX_INCIDENTS_TODAY) {
+                    allIncidentsData = allIncidentsData.slice(0, MAX_INCIDENTS_TODAY);
+                    console.log(`⚠️ Limited to ${MAX_INCIDENTS_TODAY} incidents (max for today)`);
+                }
+
+                console.log(`✅ Today's incidents loaded: ${allIncidentsData.length}`);
+                
+                if (allIncidentsData.length === 0) {
+                    displayNoDataToday();
+                    hidePagination();
+                    return;
+                }
+                
+                // Update current date display - HANYA TARIKH SAHAJA (tanpa "Today Only")
+                const today = new Date();
+                document.getElementById('currentDateDisplay').textContent = formatDateDisplay(today);
+                
+                // Display current incident
+                await displayCurrentIncident();
+                
+                // Create SIMPLE pagination as requested: 1 2 >
+                createSimplePagination();
+                showPagination();
+                
+            } catch (error) {
+                console.error('❌ Error loading today\'s incidents:', error);
+                displayError();
+                hidePagination();
+            }
+        }
+
+        // Show pagination card
+        function showPagination() {
+            const paginationCard = document.getElementById('paginationCard');
+            if (paginationCard) {
+                paginationCard.style.display = 'block';
+            }
+        }
+
+        // Hide pagination card
+        function hidePagination() {
+            const paginationCard = document.getElementById('paginationCard');
+            if (paginationCard) {
+                paginationCard.style.display = 'none';
+            }
+        }
+
+        // Display current incident with all 4 boxes
+        async function displayCurrentIncident() {
+            const container = document.getElementById('incidentContainer');
+            
+            if (allIncidentsData.length === 0) {
+                displayNoDataToday();
+                return;
+            }
+
+            // Calculate which incident to show
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const currentIncident = allIncidentsData[startIndex];
+            
+            if (!currentIncident) {
+                displayNoDataToday();
+                return;
+            }
+
+            console.log(`📋 Displaying incident: ${currentIncident.name || 'Unnamed'} (ID: ${currentIncident.id})`);
+            
+            // Load related data from subcollections
+            const [chronologyData, ipStatusData, pearData] = await Promise.all([
+                loadRelatedData('chronology', currentIncident.id),
+                loadRelatedData('IPstatus', currentIncident.id),
+                loadRelatedData('pear', currentIncident.id)
+            ]);
+
+            // Format incident date
+            let incidentDate = 'N/A';
+            if (currentIncident.createdAt) {
+                try {
+                    const date = currentIncident.createdAt.toDate();
+                    incidentDate = formatDateDisplay(date);
+                } catch (error) {
+                    console.warn('Error formatting incident date:', error);
+                }
+            } else if (currentIncident.date) {
+                incidentDate = currentIncident.date;
+            }
+
+            // Get the latest record for each subcollection
+            const latestChronology = chronologyData[0] || {};
+            const latestIPStatus = ipStatusData[0] || {};
+            const latestPear = pearData[0] || {};
+
+            // Create the incident container - TANPA DESCRIPTION DI BAWAH TAJUK
+            container.innerHTML = `
+                <div class="incident-container">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-fire"></i> Incident: ${currentIncident.name || 'Unnamed Incident'}
+                        </h2>
+                        <div class="table-controls">
+                            <span class="record-count">Today: ${allIncidentsData.length} incidents | Page ${currentPage} of ${Math.ceil(allIncidentsData.length / itemsPerPage)}</span>
+                            <button class="refresh-btn" onclick="refreshData()" title="Refresh Data">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="boxes-grid">
+                        <!-- BOX 1: INCIDENT -->
+                        <div class="info-box incident-details">
+                            <div class="box-header">
+                                <h3 class="box-title">
+                                    <i class="fas fa-fire"></i> INCIDENT
+                                </h3>
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <span class="info-label">Incident Name:</span>
+                                    <span class="info-value">${currentIncident.name || 'Not specified'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Date:</span>
+                                    <span class="info-value">${incidentDate}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Type of Incident:</span>
+                                    <span class="info-value">${capitalizeFirstLetter(currentIncident.type || 'Not specified')}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Location:</span>
+                                    <span class="info-value">${currentIncident.location || 'Not specified'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Fire Type:</span>
+                                    <span class="info-value">${capitalizeFirstLetter(currentIncident.fireType || 'Not specified')}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Description:</span>
+                                    <span class="info-value ${currentIncident.description ? '' : 'empty'}">
+                                        ${currentIncident.description || 'No description provided'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- BOX 2: CHRONOLOGY -->
+                        <div class="info-box">
+                            <div class="box-header">
+                                <h3 class="box-title">
+                                    <i class="fas fa-clock"></i> CHRONOLOGY
+                                </h3>
+                                <button class="manage-btn" onclick="manageChronology('${currentIncident.id}')">
+                                    <i class="fas fa-cog"></i> Manage
+                                </button>
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <span class="info-label">Report By:</span>
+                                    <span class="info-value ${latestChronology.name || latestChronology.reportBy ? '' : 'empty'}">
+                                        ${latestChronology.name || latestChronology.reportBy || 'No data'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Location:</span>
+                                    <span class="info-value ${latestChronology.location ? '' : 'empty'}">
+                                        ${latestChronology.location || 'No data'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Incident Info:</span>
+                                    <span class="info-value ${(latestChronology.infoIncident || latestChronology.info) ? '' : 'empty'}">
+                                        ${latestChronology.infoIncident || latestChronology.info || 'No information'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- BOX 3: IP STATUS -->
+                        <div class="info-box">
+                            <div class="box-header">
+                                <h3 class="box-title">
+                                    <i class="fas fa-network-wired"></i> IP STATUS
+                                </h3>
+                                <button class="manage-btn" onclick="manageIPStatus('${currentIncident.id}')">
+                                    <i class="fas fa-cog"></i> Manage
+                                </button>
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <span class="info-label">Reported By:</span>
+                                    <span class="info-value ${latestIPStatus.name || latestIPStatus.reportBy ? '' : 'empty'}">
+                                        ${latestIPStatus.name || latestIPStatus.reportBy || 'No data'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">IP ID:</span>
+                                    <span class="info-value">
+                                        ${latestIPStatus.IPid ? `<span class="ip-id-badge">${latestIPStatus.IPid}</span>` : '<span class="empty">No data</span>'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">IP Status:</span>
+                                    <span class="info-value">
+                                        ${latestIPStatus.ipStatus ? `
+                                            <span class="status-badge ${getStatusBadgeClass(latestIPStatus.ipStatus)}">
+                                                <i class="fas ${getStatusIcon(latestIPStatus.ipStatus)}"></i> ${capitalizeFirstLetter(latestIPStatus.ipStatus)}
+                                            </span>
+                                        ` : '<span class="empty">No data</span>'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Location:</span>
+                                    <span class="info-value ${latestIPStatus.location ? '' : 'empty'}">
+                                        ${latestIPStatus.location || 'No data'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Info Incident:</span>
+                                    <span class="info-value ${(latestIPStatus.infoIncident || latestIPStatus.info) ? '' : 'empty'}">
+                                        ${latestIPStatus.infoIncident || latestIPStatus.info || 'No information'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- BOX 4: PEAR -->
+                        <div class="info-box">
+                            <div class="box-header">
+                                <h3 class="box-title">
+                                    <i class="fas fa-user-shield"></i> PEAR
+                                </h3>
+                                <button class="manage-btn" onclick="managePear('${currentIncident.id}')">
+                                    <i class="fas fa-cog"></i> Manage
+                                </button>
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <span class="info-label">Reported By:</span>
+                                    <span class="info-value ${latestPear.name || latestPear.reportBy ? '' : 'empty'}">
+                                        ${latestPear.name || latestPear.reportBy || 'No data'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Category:</span>
+                                    <span class="info-value ${latestPear.category ? '' : 'empty'}">
+                                        ${capitalizeFirstLetter(latestPear.category) || 'No data'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Description:</span>
+                                    <span class="info-value ${latestPear.description ? '' : 'empty'}">
+                                        ${latestPear.description || 'No data'}
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Status:</span>
+                                    <span class="info-value">
+                                        ${latestPear.status ? `
+                                            <span class="status-badge ${getStatusBadgeClass(latestPear.status)}">
+                                                <i class="fas ${getStatusIcon(latestPear.status)}"></i> ${capitalizeFirstLetter(latestPear.status)}
+                                            </span>
+                                        ` : '<span class="empty">No data</span>'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load related data from subcollection based on incidentId
+        async function loadRelatedData(collectionName, incidentId) {
+            try {
+                console.log(`📊 Loading ${collectionName} subcollection for incident: ${incidentId}`);
+                
+                // Get incident document reference
+                const incidentRef = db.collection('incidents').doc(incidentId);
+                
+                // Access subcollection (chronology, IPstatus, pear)
+                const subcollectionRef = incidentRef.collection(collectionName);
+                
+                // Get the latest record from subcollection
+                const snapshot = await subcollectionRef
+                    .orderBy('timestamp', 'desc')
+                    .limit(1) // Get only the latest record
+                    .get();
+                
+                const data = [];
+                snapshot.forEach((doc) => {
+                    data.push({ id: doc.id, ...doc.data() });
+                });
+                
+                console.log(`✅ Found ${data.length} ${collectionName} records in subcollection for incident ${incidentId}`);
+                return data;
+                
+            } catch (error) {
+                console.error(`❌ Error loading ${collectionName} subcollection:`, error);
+                return [];
+            }
+        }
+
+        // Display no data message for today
+        function displayNoDataToday() {
+            const container = document.getElementById('incidentContainer');
+            const today = new Date();
+            container.innerHTML = `
+                <div class="incident-container">
+                    <div class="no-data">
+                        <i class="fas fa-calendar-day"></i>
+                        <p>No incidents reported today</p>
+                        <small>Only showing incidents from ${formatDateDisplay(today)}</small>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Display error message
+        function displayError() {
+            const container = document.getElementById('incidentContainer');
+            container.innerHTML = `
+                <div class="incident-container">
+                    <div class="no-data error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error loading incidents</p>
+                        <small>Please try again later</small>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Create SIMPLE pagination as requested: 1 2 >
+        function createSimplePagination() {
+            const paginationContainer = document.querySelector('.pagination-container');
+            const totalPages = Math.ceil(allIncidentsData.length / itemsPerPage);
+            
+            if (totalPages <= 1) {
+                hidePagination();
+                return;
+            }
+            
+            let paginationHTML = '<div class="pagination">';
+            
+            // Format ringkas: 1 2 > 
+            // Jika hanya 1 page, tak tunjuk pagination
+            // Jika 2 pages: "1 2 >"
+            // Jika lebih dari 2 pages: "1 2 >" (page 1), "2 3 >" (page 2), dsb
+            
+            if (totalPages <= 2) {
+                // Jika 2 pages atau kurang, tunjuk semua
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHTML += `<span class="page-number ${currentPage === i ? 'active' : ''}" onclick="goToPage(${i})">${i}</span>`;
+                }
+                
+                // Tambah next button jika bukan page terakhir
+                if (currentPage < totalPages) {
+                    paginationHTML += `<span class="page-next" onclick="goToPage(${currentPage + 1})">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>`;
+                }
+            } else {
+                // Jika lebih dari 2 pages
+                // Tunjukkan current page dan page seterusnya
+                if (currentPage === 1) {
+                    // Page 1: "1 2 >"
+                    paginationHTML += `<span class="page-number active" onclick="goToPage(1)">1</span>`;
+                    paginationHTML += `<span class="page-number" onclick="goToPage(2)">2</span>`;
+                    paginationHTML += `<span class="page-next" onclick="goToPage(2)">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>`;
+                } else if (currentPage === totalPages) {
+                    // Page terakhir: "< last-1 last"
+                    paginationHTML += `<span class="page-next" onclick="goToPage(${totalPages - 1})">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>`;
+                    paginationHTML += `<span class="page-number" onclick="goToPage(${totalPages - 1})">${totalPages - 1}</span>`;
+                    paginationHTML += `<span class="page-number active" onclick="goToPage(${totalPages})">${totalPages}</span>`;
+                } else {
+                    // Page tengah: "current current+1 >"
+                    paginationHTML += `<span class="page-number active" onclick="goToPage(${currentPage})">${currentPage}</span>`;
+                    paginationHTML += `<span class="page-number" onclick="goToPage(${currentPage + 1})">${currentPage + 1}</span>`;
+                    paginationHTML += `<span class="page-next" onclick="goToPage(${currentPage + 1})">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>`;
+                }
+            }
+            
+            paginationHTML += '</div>';
+            paginationContainer.innerHTML = paginationHTML;
+        }
+
+        // Go to specific page
+        function goToPage(page) {
+            if (page !== currentPage && page >= 1 && page <= Math.ceil(allIncidentsData.length / itemsPerPage)) {
+                loadTodayIncidents(page);
+            }
+        }
+
+        // Refresh data
+        function refreshData() {
+            const btn = document.querySelector('.refresh-btn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+            
+            loadTodayIncidents(currentPage);
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }, 1000);
+        }
+
+        // FIX: Manage buttons functionality - redirect ke halaman yang betul
+        function manageChronology(incidentId) {
+            // Store incidentId for use in admin-chronology.html
+            localStorage.setItem('currentIncidentId', incidentId);
+            console.log(`Redirecting to Chronology page with incidentId: ${incidentId}`);
+            // Redirect to chronology page
+            window.location.href = "admin-chronology.html";
+        }
+
+        function manageIPStatus(incidentId) {
+            // Store incidentId for use in admin-ip.html
+            localStorage.setItem('currentIncidentId', incidentId);
+            console.log(`Redirecting to IP Status page with incidentId: ${incidentId}`);
+            // Redirect to IP status page
+            window.location.href = "admin-ip.html";
+        }
+
+        function managePear(incidentId) {
+            // Store incidentId for use in admin-pear.html
+            localStorage.setItem('currentIncidentId', incidentId);
+            console.log(`Redirecting to PEAR page with incidentId: ${incidentId}`);
+            // Redirect to pear page
+            window.location.href = "admin-pear.html";
+        }
+
+        // Initialize the page when loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminAccess();
+            // Load incidents for TODAY ONLY
+            loadTodayIncidents(1);
+        });
+    </script>
+</body>
+</html>
