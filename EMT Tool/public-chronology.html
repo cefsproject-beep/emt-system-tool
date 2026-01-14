@@ -258,6 +258,10 @@
             background: linear-gradient(135deg, #3498db, #2980b9);
         }
 
+        .date-filter-btn.all-data-btn {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -282,7 +286,7 @@
             border-left: 5px solid var(--accent);
             display: flex;
             flex-direction: column;
-            height: 500px;
+            height: 600px;
         }
 
         .table-section .section-header {
@@ -650,7 +654,7 @@
         @media (max-width: 768px) {
             .table-section {
                 padding: 25px;
-                height: 450px;
+                height: 550px;
             }
             
             .section-header {
@@ -675,7 +679,7 @@
             }
             
             .table-scroll-wrapper {
-                max-height: 350px;
+                max-height: 400px;
             }
         }
 
@@ -687,7 +691,7 @@
             .table-section {
                 padding: 20px;
                 border-radius: 15px;
-                height: 400px;
+                height: 500px;
             }
             
             .page-title {
@@ -746,6 +750,9 @@
             <div>
                 <h1 class="page-title">Chronology Records</h1>
                 <div class="date-filter-controls">
+                    <button id="allDataBtn" class="date-filter-btn all-data-btn" onclick="showAllData()">
+                        <i class="fas fa-globe"></i> All Data
+                    </button>
                     <button id="todayBtn" class="date-filter-btn today-btn" onclick="showTodayData()">
                         <i class="fas fa-calendar-day"></i> Today's Data
                     </button>
@@ -754,7 +761,7 @@
                     </button>
                 </div>
             </div>
-            <div id="currentDateDisplay" class="date-display-main">Loading date...</div>
+            <div id="currentDateDisplay" class="date-display-main">All Chronology Records</div>
         </div>
 
         <!-- Chronology Table Section -->
@@ -775,6 +782,8 @@
                         <option value="name_desc">By Name (Z-A)</option>
                         <option value="location_asc">By Location (A-Z)</option>
                         <option value="location_desc">By Location (Z-A)</option>
+                        <option value="date_asc">By Date (Old-New)</option>
+                        <option value="date_desc">By Date (New-Old)</option>
                     </select>
                     <span class="record-count" id="chronologyRecordCount">0 records</span>
                     <button class="refresh-btn" onclick="refreshChronology()" title="Refresh Data">
@@ -829,6 +838,7 @@
         let selectedDate = null;
         let selectedIncidentId = null;
         let isShowingSpecificDate = false;
+        let viewMode = 'all'; // 'all', 'today', or 'specific'
 
         // Format date to YYYY-MM-DD
         function formatDateToYMD(date) {
@@ -864,11 +874,12 @@
                         hour12: false
                     }),
                     timestamp: date.getTime(),
-                    dateYMD: dateYMD
+                    dateYMD: dateYMD,
+                    fullDate: date
                 };
             } catch (error) {
                 console.warn('Error formatting timestamp:', error);
-                return { date: 'N/A', time: 'N/A', timestamp: 0, dateYMD: 'N/A' };
+                return { date: 'N/A', time: 'N/A', timestamp: 0, dateYMD: 'N/A', fullDate: null };
             }
         }
 
@@ -891,6 +902,7 @@
                 selectedDate = urlParams.date;
                 selectedIncidentId = urlParams.incidentId;
                 isShowingSpecificDate = true;
+                viewMode = 'specific';
                 
                 localStorage.setItem('selectedDate', selectedDate);
                 localStorage.setItem('selectedIncidentId', selectedIncidentId);
@@ -902,9 +914,12 @@
                     selectedDate = storedDate;
                     selectedIncidentId = storedIncidentId;
                     isShowingSpecificDate = true;
+                    viewMode = 'specific';
                 } else {
-                    selectedDate = todayYMD;
+                    selectedDate = null;
+                    selectedIncidentId = null;
                     isShowingSpecificDate = false;
+                    viewMode = 'all';
                 }
             }
             
@@ -913,32 +928,47 @@
 
         // Update UI based on date mode
         function updateDateDisplay() {
-            const today = new Date();
+            const allDataBtn = document.getElementById('allDataBtn');
             const todayBtn = document.getElementById('todayBtn');
             const specificDateBtn = document.getElementById('specificDateBtn');
             const specificDateDisplay = document.getElementById('specificDateDisplay');
             const currentDateDisplay = document.getElementById('currentDateDisplay');
             
-            if (isShowingSpecificDate && selectedDate) {
+            // Reset all buttons
+            allDataBtn.classList.remove('active');
+            todayBtn.classList.remove('active');
+            specificDateBtn.classList.remove('active');
+            
+            if (viewMode === 'all') {
+                allDataBtn.classList.add('active');
+                todayBtn.style.display = 'flex';
+                specificDateBtn.style.display = 'none';
+                currentDateDisplay.textContent = 'All Chronology Records';
+                
+            } else if (viewMode === 'today') {
+                const today = new Date();
+                const displayDate = formatDateDisplay(today);
+                
+                todayBtn.classList.add('active');
+                todayBtn.style.display = 'flex';
+                specificDateBtn.style.display = 'none';
+                currentDateDisplay.textContent = `Today: ${displayDate}`;
+                
+            } else if (viewMode === 'specific' && selectedDate) {
                 const dateObj = new Date(selectedDate);
                 const displayDate = formatDateDisplay(dateObj);
                 
-                todayBtn.classList.remove('active');
                 specificDateBtn.style.display = 'flex';
                 specificDateBtn.classList.add('active');
                 specificDateDisplay.textContent = displayDate;
                 
-                currentDateDisplay.textContent = displayDate;
-                currentDateDisplay.innerHTML += ' <i class="fas fa-filter" style="color: #3498db;"></i>';
-                
-            } else {
-                const displayDate = formatDateDisplay(today);
-                
-                todayBtn.classList.add('active');
-                specificDateBtn.style.display = 'none';
-                specificDateBtn.classList.remove('active');
-                
-                currentDateDisplay.textContent = displayDate;
+                if (selectedIncidentId) {
+                    currentDateDisplay.textContent = `${displayDate} (Selected Incident)`;
+                    currentDateDisplay.innerHTML += ' <i class="fas fa-filter" style="color: #f39c12;"></i>';
+                } else {
+                    currentDateDisplay.textContent = displayDate;
+                    currentDateDisplay.innerHTML += ' <i class="fas fa-filter" style="color: #3498db;"></i>';
+                }
             }
         }
 
@@ -973,6 +1003,7 @@
                             chronology.formattedTime = timeInfo.time;
                             chronology.timestampValue = timeInfo.timestamp;
                             chronology.dateYMD = timeInfo.dateYMD;
+                            chronology.fullDate = timeInfo.fullDate;
                             
                             chronologyList.push(chronology);
                         });
@@ -991,7 +1022,10 @@
                     allChronologyData.push(...chronologyList);
                 });
                 
-                filterDataByDate();
+                // Sort by newest first by default
+                allChronologyData.sort((a, b) => (b.timestampValue || 0) - (a.timestampValue || 0));
+                
+                filterDataByViewMode();
                 
                 setTimeout(scrollToSelectedIncident, 1000);
                 
@@ -1004,18 +1038,33 @@
             }
         }
 
-        // Filter data based on date mode
-        function filterDataByDate() {
-            if (isShowingSpecificDate && selectedDate) {
-                filteredData = allChronologyData.filter(data => {
-                    return data.dateYMD === selectedDate;
-                });
+        // Filter data based on view mode
+        function filterDataByViewMode() {
+            if (viewMode === 'all') {
+                // Show ALL data (all dates, all incidents)
+                filteredData = [...allChronologyData];
                 
-            } else {
+            } else if (viewMode === 'today') {
+                // Show only today's data
                 const todayYMD = formatDateToYMD(new Date());
                 filteredData = allChronologyData.filter(data => 
                     data.dateYMD === todayYMD
                 );
+                
+            } else if (viewMode === 'specific' && selectedDate) {
+                // Show data for specific date
+                let dateFilteredData = allChronologyData.filter(data => {
+                    return data.dateYMD === selectedDate;
+                });
+                
+                // If incidentId is specified, filter by incidentId too
+                if (selectedIncidentId) {
+                    filteredData = dateFilteredData.filter(data => 
+                        data.incidentId === selectedIncidentId
+                    );
+                } else {
+                    filteredData = dateFilteredData;
+                }
             }
             
             applySorting('timestamp_desc');
@@ -1039,6 +1088,10 @@
                         return (a.location || '').localeCompare(b.location || '');
                     case 'location_desc': // Location Z-A
                         return (b.location || '').localeCompare(a.location || '');
+                    case 'date_asc': // Date Old-New
+                        return (a.fullDate || 0) - (b.fullDate || 0);
+                    case 'date_desc': // Date New-Old
+                        return (b.fullDate || 0) - (a.fullDate || 0);
                     default:
                         return (b.timestampValue || 0) - (a.timestampValue || 0);
                 }
@@ -1069,9 +1122,19 @@
             const searchResults = applySearchFilter();
             
             if (searchResults.length === 0) {
-                const message = isShowingSpecificDate 
-                    ? `No chronology records found for ${selectedDate}.` 
-                    : 'No chronology recorded yet for today.';
+                let message = '';
+                
+                if (viewMode === 'all') {
+                    message = 'No chronology records found in the system.';
+                } else if (viewMode === 'today') {
+                    message = 'No chronology recorded yet for today.';
+                } else if (viewMode === 'specific') {
+                    if (selectedIncidentId) {
+                        message = `No chronology records found for the selected incident on ${selectedDate}.`;
+                    } else {
+                        message = `No chronology records found for ${selectedDate}.`;
+                    }
+                }
                     
                 tbody.innerHTML = `
                     <tr>
@@ -1109,7 +1172,7 @@
                     timestampHTML += `<div class="incident-source">From: ${data.incidentName}</div>`;
                     
                     if (isSelectedIncident) {
-                        timestampHTML += `<div class="selected-tag">Your Selected Incident</div>`;
+                        timestampHTML += `<div class="selected-tag">Selected Incident</div>`;
                     }
                 }
                 
@@ -1143,7 +1206,7 @@
 
         // Auto-scroll to the selected incident
         function scrollToSelectedIncident() {
-            if (selectedIncidentId) {
+            if (selectedIncidentId && viewMode === 'specific') {
                 const highlightedRow = document.querySelector('tr.highlighted');
                 if (highlightedRow) {
                     highlightedRow.scrollIntoView({ 
@@ -1161,29 +1224,31 @@
             
             let countText = '';
             
-            if (isShowingSpecificDate) {
+            if (viewMode === 'all') {
+                countText = `${searchResults.length} of ${allChronologyData.length} total records`;
+                
+            } else if (viewMode === 'today') {
+                const todayYMD = formatDateToYMD(new Date());
+                const todayRecords = allChronologyData.filter(d => d.dateYMD === todayYMD).length;
+                
+                countText = `${searchResults.length} of ${todayRecords} today's records`;
+                
+            } else if (viewMode === 'specific') {
                 const dateObj = new Date(selectedDate);
                 const displayDate = formatDateDisplay(dateObj);
                 
+                // Get total records for the date
                 const dateRecords = allChronologyData.filter(d => d.dateYMD === selectedDate).length;
                 
                 if (selectedIncidentId) {
+                    // Get records for selected incident on that date
                     const incidentRecords = allChronologyData.filter(d => 
                         d.dateYMD === selectedDate && d.incidentId === selectedIncidentId
                     ).length;
                     
-                    countText = `${searchResults.length} of ${dateRecords} records for ${displayDate} (${incidentRecords} from selected incident)`;
+                    countText = `${searchResults.length} of ${incidentRecords} records from selected incident for ${displayDate}`;
                 } else {
                     countText = `${searchResults.length} of ${dateRecords} records for ${displayDate}`;
-                }
-            } else {
-                const todayYMD = formatDateToYMD(new Date());
-                const todayRecords = allChronologyData.filter(d => d.dateYMD === todayYMD).length;
-                
-                if (searchTerm) {
-                    countText = `${searchResults.length} of ${todayRecords} today's records`;
-                } else {
-                    countText = `${todayRecords} records for today`;
                 }
             }
             
@@ -1196,10 +1261,10 @@
             updateRecordCount();
         }
 
-        // Show today's data
-        function showTodayData() {
-            const today = new Date();
-            selectedDate = formatDateToYMD(today);
+        // Show ALL data (default view)
+        function showAllData() {
+            viewMode = 'all';
+            selectedDate = null;
             selectedIncidentId = null;
             isShowingSpecificDate = false;
             
@@ -1207,14 +1272,29 @@
             localStorage.removeItem('selectedIncidentId');
             
             updateDateDisplay();
-            filterDataByDate();
+            filterDataByViewMode();
+        }
+
+        // Show today's data
+        function showTodayData() {
+            const today = new Date();
+            selectedDate = formatDateToYMD(today);
+            selectedIncidentId = null;
+            isShowingSpecificDate = false;
+            viewMode = 'today';
+            
+            localStorage.removeItem('selectedDate');
+            localStorage.removeItem('selectedIncidentId');
+            
+            updateDateDisplay();
+            filterDataByViewMode();
         }
 
         // Show specific date data
         function showSpecificDateData() {
-            isShowingSpecificDate = true;
+            viewMode = 'specific';
             updateDateDisplay();
-            filterDataByDate();
+            filterDataByViewMode();
         }
 
         // Show no data error
