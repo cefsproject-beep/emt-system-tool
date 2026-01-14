@@ -260,6 +260,27 @@
             }
         }
 
+        /* Date Display Styling */
+        .date-display {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 12px 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .date-display i {
+            color: #ffd166;
+            font-size: 1.2rem;
+        }
+
         /* Back Navigation */
         .back-nav {
             margin-bottom: 20px;
@@ -325,6 +346,70 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             color: var(--primary);
+        }
+
+        /* Header Pagination Styling - SIMPLIFIED */
+        .header-pagination {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 10px;
+            border-radius: 25px;
+            border: 1px solid rgba(74, 111, 165, 0.2);
+        }
+
+        .header-pagination-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid rgba(74, 111, 165, 0.3);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .header-pagination-btn:hover:not(:disabled) {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .header-pagination-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .header-page-number {
+            min-width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--dark);
+            background: rgba(74, 111, 165, 0.1);
+            border: 1px solid rgba(74, 111, 165, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .header-page-number:hover {
+            background: rgba(74, 111, 165, 0.2);
+        }
+
+        .header-page-number.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
 
         /* Boxes Grid Layout */
@@ -706,6 +791,18 @@
                 align-items: flex-start;
                 gap: 15px;
             }
+            
+            .date-display {
+                padding: 10px 15px;
+                font-size: 1rem;
+                margin-top: 10px;
+            }
+            
+            .header-pagination {
+                align-self: stretch;
+                justify-content: center;
+                margin-top: 10px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -735,6 +832,18 @@
             
             .manage-btn {
                 padding: 8px 15px;
+                font-size: 0.85rem;
+            }
+            
+            .date-display {
+                align-self: stretch;
+                text-align: center;
+            }
+            
+            .header-pagination-btn,
+            .header-page-number {
+                width: 30px;
+                height: 30px;
                 font-size: 0.85rem;
             }
         }
@@ -785,7 +894,11 @@
 
         <div class="page-header">
             <h1 class="page-title">Incident Details</h1>
-            <!-- Removed the "VIEW ONLY" badge -->
+            <!-- Date Display -->
+            <div class="date-display" id="dateDisplay">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Loading date...</span>
+            </div>
         </div>
 
         <!-- Loading State -->
@@ -798,10 +911,22 @@
 
         <!-- Incident Details Section (hidden initially) -->
         <div id="incidentDetails" class="incident-container" style="display: none;">
+            <!-- Simplified Pagination in Header -->
             <div class="section-header">
                 <h2 class="section-title">
                     <i class="fas fa-file-alt"></i> Incident Information
                 </h2>
+                <div class="header-pagination" id="headerPagination" style="display: none;">
+                    <button class="header-pagination-btn" id="headerPrevBtn" onclick="goToPreviousIncident()" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="header-page-number" id="headerPage1" onclick="goToIncidentByIndex(0)">1</div>
+                    <div class="header-page-number" id="headerPage2" onclick="goToIncidentByIndex(1)">2</div>
+                    <div class="header-page-number" id="headerPage3" onclick="goToIncidentByIndex(2)">3</div>
+                    <button class="header-pagination-btn" id="headerNextBtn" onclick="goToNextIncident()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
             
             <!-- Boxes Grid Layout -->
@@ -812,7 +937,6 @@
                         <h3 class="box-title">
                             <i class="fas fa-fire"></i> INCIDENT
                         </h3>
-                        <!-- REMOVED STATUS BADGE -->
                     </div>
                     <div class="info-grid">
                         <div class="info-row">
@@ -940,6 +1064,8 @@
         let chronologyData = [];
         let ipStatusData = [];
         let pearData = [];
+        let allIncidents = [];
+        let currentIncidentIndex = 0;
 
         // Check admin access
         function checkAdminAccess() {
@@ -963,17 +1089,14 @@
             }
         }
 
-        // Display user profile - FIXED to use actual user data
+        // Display user profile
         function displayUserProfile(user) {
-            // Get initials from user name
             const initials = user.name ? 
                 user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'AU';
             
-            // Update user info display
             document.getElementById('userAvatar').textContent = initials;
             document.getElementById('userName').textContent = user.name || 'Admin User';
             
-            // Create position string based on available data
             let positionText = '';
             if (user.position) {
                 positionText += user.position;
@@ -987,8 +1110,6 @@
             }
             
             document.getElementById('userPosition').textContent = positionText;
-            
-            console.log('User profile displayed:', user);
         }
 
         // Logout function
@@ -1054,29 +1175,27 @@
             return string ? string.charAt(0).toUpperCase() + string.slice(1) : 'N/A';
         }
 
-        // Get status color
-        function getStatusColor(status) {
-            switch(status.toLowerCase()) {
-                case 'active':
-                case 'ongoing':
-                    return 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)';
-                case 'completed':
-                case 'closed':
-                    return 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
-                case 'plan':
-                case 'planned':
-                    return 'linear-gradient(135deg, #f39c12 0%, #d35400 100%)';
-                case 'monitoring':
-                    return 'linear-gradient(135deg, #5d9cec 0%, #4a89dc 100%)';
-                default:
-                    return 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)';
+        // Update Date Display
+        function updateDateDisplay() {
+            if (currentIncidentData) {
+                const incidentDate = currentIncidentData.createdAt 
+                    ? currentIncidentData.createdAt.toDate() 
+                    : new Date();
+                
+                const formattedDate = formatDateDisplay(incidentDate);
+                const formattedTime = formatTimeDisplay(incidentDate);
+                
+                document.getElementById('dateDisplay').innerHTML = `
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>${formattedDate} • ${formattedTime}</span>
+                `;
             }
         }
 
         // Load incident data from Firebase
         async function loadIncidentData() {
             try {
-                // Get incident ID from URL parameters FIRST - FIXED LOGIC
+                // Get incident ID from URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
                 currentIncidentId = urlParams.get('incidentId');
                 
@@ -1087,9 +1206,13 @@
                                        localStorage.getItem('lastViewedIncidentId');
                 }
                 
-                // If still no ID, check for new incident creation
+                // Check if this is a newly created incident (redirect from create page)
                 if (!currentIncidentId) {
                     currentIncidentId = localStorage.getItem('newIncidentId');
+                    if (currentIncidentId) {
+                        // Clear the flag after using it
+                        localStorage.removeItem('newIncidentId');
+                    }
                 }
                 
                 if (!currentIncidentId) {
@@ -1098,7 +1221,7 @@
                 
                 console.log('Loading incident ID:', currentIncidentId);
                 
-                // Save to localStorage untuk highlight functionality
+                // Save to localStorage
                 localStorage.setItem('currentIncidentId', currentIncidentId);
                 localStorage.setItem('lastViewedIncidentId', currentIncidentId);
                 
@@ -1112,15 +1235,27 @@
                 currentIncidentData = { id: incidentDoc.id, ...incidentDoc.data() };
                 console.log('Loaded incident data:', currentIncidentData);
                 
-                // Load all subcollections in parallel
+                // Get date from current incident for filtering
+                const incidentDate = currentIncidentData.createdAt 
+                    ? currentIncidentData.createdAt.toDate() 
+                    : new Date();
+                const targetDate = new Date(
+                    incidentDate.getFullYear(),
+                    incidentDate.getMonth(),
+                    incidentDate.getDate()
+                );
+                
+                // Load all data in parallel
                 await Promise.all([
                     loadChronologyData(),
                     loadIPStatusData(),
-                    loadPEARData()
+                    loadPEARData(),
+                    loadIncidentsByDate(targetDate)
                 ]);
                 
                 // Display all data
                 displayIncidentData();
+                updateDateDisplay();
                 
             } catch (error) {
                 console.error('Error loading incident data:', error);
@@ -1128,7 +1263,147 @@
             }
         }
 
-        // Load Chronology data from subcollection
+        // Load incidents based on date
+        async function loadIncidentsByDate(targetDate) {
+            try {
+                console.log('Loading incidents for date:', targetDate);
+                
+                // Get all incidents
+                const snapshot = await db.collection('incidents')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                allIncidents = [];
+                
+                if (!snapshot.empty) {
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        allIncidents.push({ 
+                            id: doc.id, 
+                            ...data
+                        });
+                    });
+                    
+                    console.log(`Loaded ${allIncidents.length} total incidents`);
+                    
+                    // Filter incidents by date
+                    const filteredIncidents = allIncidents.filter(incident => {
+                        if (!incident.createdAt) return false;
+                        
+                        const incidentDate = incident.createdAt.toDate();
+                        const incidentDateStr = incidentDate.toDateString();
+                        const targetDateStr = targetDate.toDateString();
+                        
+                        return incidentDateStr === targetDateStr;
+                    });
+                    
+                    console.log(`Filtered to ${filteredIncidents.length} incidents for date`);
+                    
+                    // Find current incident index
+                    currentIncidentIndex = filteredIncidents.findIndex(incident => incident.id === currentIncidentId);
+                    
+                    if (currentIncidentIndex === -1) {
+                        currentIncidentIndex = 0;
+                    }
+                    
+                    // Update pagination UI
+                    updateHeaderPagination();
+                }
+                
+            } catch (error) {
+                console.error('Error loading incidents by date:', error);
+            }
+        }
+
+        // Update simplified header pagination
+        function updateHeaderPagination() {
+            if (allIncidents.length <= 1) {
+                document.getElementById('headerPagination').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('headerPagination').style.display = 'flex';
+            
+            const prevBtn = document.getElementById('headerPrevBtn');
+            const nextBtn = document.getElementById('headerNextBtn');
+            const page1 = document.getElementById('headerPage1');
+            const page2 = document.getElementById('headerPage2');
+            const page3 = document.getElementById('headerPage3');
+            
+            // Update prev/next button states
+            prevBtn.disabled = currentIncidentIndex === 0;
+            nextBtn.disabled = currentIncidentIndex === allIncidents.length - 1;
+            
+            // Calculate which pages to show
+            let pageNumbers = [];
+            
+            if (allIncidents.length <= 3) {
+                // Show all pages if 3 or less
+                for (let i = 0; i < allIncidents.length; i++) {
+                    pageNumbers.push(i);
+                }
+            } else {
+                // Show dynamic pages based on current position
+                if (currentIncidentIndex === 0) {
+                    pageNumbers = [0, 1, 2];
+                } else if (currentIncidentIndex === allIncidents.length - 1) {
+                    pageNumbers = [allIncidents.length - 3, allIncidents.length - 2, allIncidents.length - 1];
+                } else {
+                    pageNumbers = [currentIncidentIndex - 1, currentIncidentIndex, currentIncidentIndex + 1];
+                }
+            }
+            
+            // Update page numbers
+            page1.textContent = pageNumbers[0] + 1;
+            page1.onclick = () => goToIncidentByIndex(pageNumbers[0]);
+            page1.className = pageNumbers[0] === currentIncidentIndex ? 'header-page-number active' : 'header-page-number';
+            
+            if (pageNumbers.length > 1) {
+                page2.textContent = pageNumbers[1] + 1;
+                page2.onclick = () => goToIncidentByIndex(pageNumbers[1]);
+                page2.className = pageNumbers[1] === currentIncidentIndex ? 'header-page-number active' : 'header-page-number';
+                page2.style.display = 'flex';
+            } else {
+                page2.style.display = 'none';
+            }
+            
+            if (pageNumbers.length > 2) {
+                page3.textContent = pageNumbers[2] + 1;
+                page3.onclick = () => goToIncidentByIndex(pageNumbers[2]);
+                page3.className = pageNumbers[2] === currentIncidentIndex ? 'header-page-number active' : 'header-page-number';
+                page3.style.display = 'flex';
+            } else {
+                page3.style.display = 'none';
+            }
+        }
+
+        // Go to specific incident by index
+        function goToIncidentByIndex(index) {
+            if (index >= 0 && index < allIncidents.length) {
+                const incidentId = allIncidents[index].id;
+                window.location.href = `admin-info.html?incidentId=${incidentId}`;
+            }
+        }
+
+        // Go to previous incident
+        function goToPreviousIncident() {
+            if (currentIncidentIndex > 0) {
+                const prevIndex = currentIncidentIndex - 1;
+                const incidentId = allIncidents[prevIndex].id;
+                window.location.href = `admin-info.html?incidentId=${incidentId}`;
+            }
+        }
+
+        // Go to next incident
+        function goToNextIncident() {
+            if (currentIncidentIndex < allIncidents.length - 1) {
+                const nextIndex = currentIncidentIndex + 1;
+                const incidentId = allIncidents[nextIndex].id;
+                window.location.href = `admin-info.html?incidentId=${incidentId}`;
+            }
+        }
+
+        // Load Chronology data
         async function loadChronologyData() {
             try {
                 const snapshot = await db.collection('incidents').doc(currentIncidentId)
@@ -1154,7 +1429,7 @@
             }
         }
 
-        // Load IP Status data from subcollection
+        // Load IP Status data
         async function loadIPStatusData() {
             try {
                 const snapshot = await db.collection('incidents').doc(currentIncidentId)
@@ -1172,7 +1447,7 @@
                             ...data
                         });
                     });
-                    console.log(`Loaded ${ipStatusData.length} IP status records:`, ipStatusData);
+                    console.log(`Loaded ${ipStatusData.length} IP status records`);
                 }
                 
             } catch (error) {
@@ -1180,7 +1455,7 @@
             }
         }
 
-        // Load PEAR data from subcollection
+        // Load PEAR data
         async function loadPEARData() {
             try {
                 const snapshot = await db.collection('incidents').doc(currentIncidentId)
@@ -1198,7 +1473,7 @@
                             ...data
                         });
                     });
-                    console.log(`Loaded ${pearData.length} PEAR records:`, pearData);
+                    console.log(`Loaded ${pearData.length} PEAR records`);
                 }
                 
             } catch (error) {
@@ -1212,14 +1487,14 @@
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('incidentDetails').style.display = 'block';
             
-            // Format dates - USING INCIDENT'S ACTUAL DATE, NOT TODAY'S DATE
+            // Format dates
             const incidentDate = currentIncidentData.createdAt 
                 ? currentIncidentData.createdAt.toDate() 
                 : new Date();
             
             // Display main incident info
             document.getElementById('incidentName').textContent = currentIncidentData.name || 'Unnamed Incident';
-            document.getElementById('incidentDate').textContent = formatDateDisplay(incidentDate); // FIXED: Show incident's date
+            document.getElementById('incidentDate').textContent = formatDateDisplay(incidentDate);
             document.getElementById('incidentType').textContent = capitalizeFirstLetter(currentIncidentData.type || 'Other');
             document.getElementById('fireType').textContent = capitalizeFirstLetter(currentIncidentData.fireType || 'Real');
             document.getElementById('incidentLocation').textContent = currentIncidentData.location || 'Not specified';
@@ -1229,9 +1504,6 @@
             displayChronologySection();
             displayIPStatusSection();
             displayPEARSection();
-            
-            // Highlight selected incident
-            highlightSelectedIncident();
         }
 
         // Display Chronology Section
@@ -1396,39 +1668,6 @@
             pearContainer.innerHTML = pearHTML;
         }
 
-        // Highlight selected incident
-        function highlightSelectedIncident() {
-            const incidentId = localStorage.getItem('lastViewedIncidentId');
-            if (incidentId && currentIncidentId === incidentId) {
-                // Add glow effect to incident container
-                const incidentContainer = document.getElementById('incidentDetails');
-                if (incidentContainer) {
-                    incidentContainer.style.boxShadow = '0 0 0 3px rgba(93, 156, 236, 0.5), 0 15px 35px rgba(0, 0, 0, 0.2)';
-                    incidentContainer.style.borderLeft = '5px solid #5d9cec';
-                    
-                    // Add pulse animation
-                    incidentContainer.style.animation = 'pulse 2s infinite';
-                }
-            }
-        }
-
-        // Add pulse animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes pulse {
-                0% {
-                    box-shadow: 0 0 0 0 rgba(93, 156, 236, 0.7), 0 15px 35px rgba(0, 0, 0, 0.2);
-                }
-                70% {
-                    box-shadow: 0 0 0 10px rgba(93, 156, 236, 0), 0 15px 35px rgba(0, 0, 0, 0.2);
-                }
-                100% {
-                    box-shadow: 0 0 0 0 rgba(93, 156, 236, 0), 0 15px 35px rgba(0, 0, 0, 0.2);
-                }
-            }
-        `;
-        document.head.appendChild(style);
-
         // Show error state
         function showErrorState(message) {
             document.getElementById('loadingState').style.display = 'none';
@@ -1438,48 +1677,39 @@
 
         // ===== MANAGE FUNCTIONS =====
         
-        // Fungsi untuk manage Chronology - FIXED VERSION
         function manageChronology() {
             if (!currentIncidentId) {
                 alert('No incident selected');
                 return;
             }
             
-            // Simpan incident ID untuk digunakan di admin-chronology.html
             localStorage.setItem('currentIncidentId', currentIncidentId);
             localStorage.setItem('lastViewedIncidentId', currentIncidentId);
             
-            // Navigate ke admin-chronology.html dengan incidentId dalam URL
             window.location.href = `admin-chronology.html?incidentId=${currentIncidentId}`;
         }
 
-        // Fungsi untuk manage IP Status - FIXED VERSION
         function manageIPStatus() {
             if (!currentIncidentId) {
                 alert('No incident selected');
                 return;
             }
             
-            // Simpan incident ID untuk digunakan di admin-ip.html
             localStorage.setItem('currentIncidentId', currentIncidentId);
             localStorage.setItem('lastViewedIncidentId', currentIncidentId);
             
-            // Navigate ke admin-ip.html dengan incidentId dalam URL
             window.location.href = `admin-ip.html?incidentId=${currentIncidentId}`;
         }
 
-        // Fungsi untuk manage PEAR - FIXED VERSION
         function managePEAR() {
             if (!currentIncidentId) {
                 alert('No incident selected');
                 return;
             }
             
-            // Simpan incident ID untuk digunakan di admin-pear.html
             localStorage.setItem('currentIncidentId', currentIncidentId);
             localStorage.setItem('lastViewedIncidentId', currentIncidentId);
             
-            // Navigate ke admin-pear.html dengan incidentId dalam URL
             window.location.href = `admin-pear.html?incidentId=${currentIncidentId}`;
         }
 
@@ -1518,7 +1748,7 @@
                 // Incident Details Table
                 const incidentDetails = [
                     ['Incident Name:', currentIncidentData.name || 'Not specified'],
-                    ['Date:', formatDateDisplay(incidentDate)], // FIXED: Show incident's date
+                    ['Date:', formatDateDisplay(incidentDate)],
                     ['Incident Type:', capitalizeFirstLetter(currentIncidentData.type || 'Other')],
                     ['Fire Type:', capitalizeFirstLetter(currentIncidentData.fireType || 'Real')],
                     ['Location:', currentIncidentData.location || 'Not specified'],
