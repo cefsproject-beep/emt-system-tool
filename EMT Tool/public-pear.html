@@ -257,6 +257,10 @@
             background: linear-gradient(135deg, #3498db, #2980b9);
         }
 
+        .date-filter-btn.all-data-btn {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -291,19 +295,19 @@
         }
 
         .table-section.people-section {
-            border-left: 5px ;
+            border-left: 5px solid #ff6b6b;
         }
 
         .table-section.environment-section {
-            border-left: 5px ;
+            border-left: 5px solid #4ecdc4;
         }
 
         .table-section.asset-section {
-            border-left: 5px ;
+            border-left: 5px solid #45b7d1;
         }
 
         .table-section.reputation-section {
-            border-left: 5px ;
+            border-left: 5px solid #96ceb4;
         }
 
         .table-section .section-header {
@@ -494,7 +498,7 @@
         }
 
         .data-table tbody tr.highlighted {
-            background: rgba(255, 243, 205, 0.7) !important;
+            background: rgba(255, 243, 205, 0.9) !important;
             border-left: 4px solid #f39c12;
         }
 
@@ -592,7 +596,7 @@
             color: white;
         }
 
-        /* NO DATA MESSAGE STYLING - SEPERTI DALAM SCREENSHOT */
+        /* NO DATA MESSAGE STYLING */
         .no-data-message {
             text-align: center;
             padding: 40px 20px;
@@ -815,6 +819,9 @@
             <div>
                 <h1 class="page-title">PEAR Records</h1>
                 <div class="date-filter-controls">
+                    <button id="allDataBtn" class="date-filter-btn all-data-btn" onclick="showAllData()">
+                        <i class="fas fa-globe"></i> All Data
+                    </button>
                     <button id="todayBtn" class="date-filter-btn today-btn" onclick="showTodayData()">
                         <i class="fas fa-calendar-day"></i> Today's Data
                     </button>
@@ -823,7 +830,7 @@
                     </button>
                 </div>
             </div>
-            <div id="currentDateDisplay" class="date-display-main">Loading date...</div>
+            <div id="currentDateDisplay" class="date-display-main">All PEAR Records</div>
         </div>
 
         <!-- 2x2 Grid Layout untuk PEAR -->
@@ -846,6 +853,8 @@
                             <option value="name_desc">By Name (Z-A)</option>
                             <option value="status_asc">By Status (A-Z)</option>
                             <option value="status_desc">By Status (Z-A)</option>
+                            <option value="date_asc">By Date (Old-New)</option>
+                            <option value="date_desc">By Date (New-Old)</option>
                         </select>
                         <span class="record-count" id="peopleRecordCount">0 records</span>
                         <button class="refresh-btn" onclick="refreshAllPEAR()" title="Refresh All PEAR Data">
@@ -868,9 +877,9 @@
                             <tbody id="peopleTableBody">
                                 <tr>
                                     <td colspan="4" class="no-data-message">
-                                        <i class="fas fa-inbox"></i>
-                                        <h4>No records available yet</h4>
-                                        <p>When admin adds PEAR records, they will appear here.</p>
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <h4>Loading PEAR data...</h4>
+                                        <p>Please wait while we load the data.</p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -897,6 +906,8 @@
                             <option value="name_desc">By Name (Z-A)</option>
                             <option value="status_asc">By Status (A-Z)</option>
                             <option value="status_desc">By Status (Z-A)</option>
+                            <option value="date_asc">By Date (Old-New)</option>
+                            <option value="date_desc">By Date (New-Old)</option>
                         </select>
                         <span class="record-count" id="environmentRecordCount">0 records</span>
                         <button class="refresh-btn" onclick="refreshAllPEAR()" title="Refresh All PEAR Data">
@@ -919,9 +930,9 @@
                             <tbody id="environmentTableBody">
                                 <tr>
                                     <td colspan="4" class="no-data-message">
-                                        <i class="fas fa-inbox"></i>
-                                        <h4>No records available yet</h4>
-                                        <p>When admin adds PEAR records, they will appear here.</p>
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <h4>Loading PEAR data...</h4>
+                                        <p>Please wait while we load the data.</p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -948,6 +959,8 @@
                             <option value="name_desc">By Name (Z-A)</option>
                             <option value="status_asc">By Status (A-Z)</option>
                             <option value="status_desc">By Status (Z-A)</option>
+                            <option value="date_asc">By Date (Old-New)</option>
+                            <option value="date_desc">By Date (New-Old)</option>
                         </select>
                         <span class="record-count" id="assetRecordCount">0 records</span>
                         <button class="refresh-btn" onclick="refreshAllPEAR()" title="Refresh All PEAR Data">
@@ -970,9 +983,9 @@
                             <tbody id="assetTableBody">
                                 <tr>
                                     <td colspan="4" class="no-data-message">
-                                        <i class="fas fa-inbox"></i>
-                                        <h4>No records available yet</h4>
-                                        <p>When admin adds PEAR records, they will appear here.</p>
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <h4>Loading PEAR data...</h4>
+                                        <p>Please wait while we load the data.</p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -999,6 +1012,8 @@
                             <option value="name_desc">By Name (Z-A)</option>
                             <option value="status_asc">By Status (A-Z)</option>
                             <option value="status_desc">By Status (Z-A)</option>
+                            <option value="date_asc">By Date (Old-New)</option>
+                            <option value="date_desc">By Date (New-Old)</option>
                         </select>
                         <span class="record-count" id="reputationRecordCount">0 records</span>
                         <button class="refresh-btn" onclick="refreshAllPEAR()" title="Refresh All PEAR Data">
@@ -1021,9 +1036,9 @@
                             <tbody id="reputationTableBody">
                                 <tr>
                                     <td colspan="4" class="no-data-message">
-                                        <i class="fas fa-inbox"></i>
-                                        <h4>No records available yet</h4>
-                                        <p>When admin adds PEAR records, they will appear here.</p>
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <h4>Loading PEAR data...</h4>
+                                        <p>Please wait while we load the data.</p>
                                     </td>
                                 </tr>
                             </tbody>
@@ -1061,6 +1076,7 @@
         let selectedDate = null;
         let selectedIncidentId = null;
         let isShowingSpecificDate = false;
+        let viewMode = 'all'; // 'all', 'today', or 'specific'
 
         // Format date to YYYY-MM-DD
         function formatDateToYMD(date) {
@@ -1096,11 +1112,12 @@
                         hour12: false
                     }),
                     timestamp: date.getTime(),
-                    dateYMD: dateYMD
+                    dateYMD: dateYMD,
+                    fullDate: date
                 };
             } catch (error) {
                 console.warn('Error formatting timestamp:', error);
-                return { date: 'N/A', time: 'N/A', timestamp: 0, dateYMD: 'N/A' };
+                return { date: 'N/A', time: 'N/A', timestamp: 0, dateYMD: 'N/A', fullDate: null };
             }
         }
 
@@ -1140,9 +1157,12 @@
                 selectedDate = urlParams.date;
                 selectedIncidentId = urlParams.incidentId;
                 isShowingSpecificDate = true;
+                viewMode = 'specific';
                 
                 localStorage.setItem('selectedDate', selectedDate);
                 localStorage.setItem('selectedIncidentId', selectedIncidentId);
+                
+                console.log('URL parameters found:', { selectedDate, selectedIncidentId });
             } else {
                 const storedDate = localStorage.getItem('selectedDate');
                 const storedIncidentId = localStorage.getItem('selectedIncidentId');
@@ -1151,50 +1171,70 @@
                     selectedDate = storedDate;
                     selectedIncidentId = storedIncidentId;
                     isShowingSpecificDate = true;
+                    viewMode = 'specific';
+                    console.log('LocalStorage parameters found:', { selectedDate, selectedIncidentId });
                 } else {
-                    selectedDate = todayYMD;
+                    selectedDate = null;
+                    selectedIncidentId = null;
                     isShowingSpecificDate = false;
+                    viewMode = 'all';
+                    console.log('No specific date parameters found, defaulting to all data');
                 }
             }
             
             return isShowingSpecificDate;
         }
 
-        // Update UI based on date mode
+        // Update UI based on view mode
         function updateDateDisplay() {
-            const today = new Date();
+            const allDataBtn = document.getElementById('allDataBtn');
             const todayBtn = document.getElementById('todayBtn');
             const specificDateBtn = document.getElementById('specificDateBtn');
             const specificDateDisplay = document.getElementById('specificDateDisplay');
             const currentDateDisplay = document.getElementById('currentDateDisplay');
             
-            if (isShowingSpecificDate && selectedDate) {
+            // Reset all buttons
+            allDataBtn.classList.remove('active');
+            todayBtn.classList.remove('active');
+            specificDateBtn.classList.remove('active');
+            
+            if (viewMode === 'all') {
+                allDataBtn.classList.add('active');
+                todayBtn.style.display = 'flex';
+                specificDateBtn.style.display = 'none';
+                currentDateDisplay.textContent = 'All PEAR Records';
+                
+            } else if (viewMode === 'today') {
+                const today = new Date();
+                const displayDate = formatDateDisplay(today);
+                
+                todayBtn.classList.add('active');
+                todayBtn.style.display = 'flex';
+                specificDateBtn.style.display = 'none';
+                currentDateDisplay.textContent = `Today: ${displayDate}`;
+                
+            } else if (viewMode === 'specific' && selectedDate) {
                 const dateObj = new Date(selectedDate);
                 const displayDate = formatDateDisplay(dateObj);
                 
-                todayBtn.classList.remove('active');
                 specificDateBtn.style.display = 'flex';
                 specificDateBtn.classList.add('active');
                 specificDateDisplay.textContent = displayDate;
                 
-                currentDateDisplay.textContent = displayDate;
-                currentDateDisplay.innerHTML += ' <i class="fas fa-filter" style="color: #3498db;"></i>';
-                
-            } else {
-                const displayDate = formatDateDisplay(today);
-                
-                todayBtn.classList.add('active');
-                specificDateBtn.style.display = 'none';
-                specificDateBtn.classList.remove('active');
-                
-                currentDateDisplay.textContent = displayDate;
+                if (selectedIncidentId) {
+                    currentDateDisplay.textContent = `${displayDate} (Selected Incident)`;
+                    currentDateDisplay.innerHTML += ' <i class="fas fa-filter" style="color: #f39c12;"></i>';
+                } else {
+                    currentDateDisplay.textContent = displayDate;
+                    currentDateDisplay.innerHTML += ' <i class="fas fa-filter" style="color: #3498db;"></i>';
+                }
             }
         }
 
-        // Load all PEAR data from all incidents (subcollection pear)
+        // Load all PEAR data from all incidents
         async function loadAllPEARData() {
             try {
-                console.log('Loading all PEAR data from subcollection pear...');
+                console.log('Loading all PEAR data...');
                 
                 const incidentsSnapshot = await db.collection('incidents').get();
                 const incidents = [];
@@ -1204,6 +1244,8 @@
                     incident.id = doc.id;
                     incidents.push(incident);
                 });
+                
+                console.log(`Found ${incidents.length} incidents`);
                 
                 const allPEARPromises = incidents.map(async (incident) => {
                     try {
@@ -1222,6 +1264,7 @@
                             pear.formattedTime = timeInfo.time;
                             pear.timestampValue = timeInfo.timestamp;
                             pear.dateYMD = timeInfo.dateYMD;
+                            pear.fullDate = timeInfo.fullDate;
                             
                             // Add status class
                             pear.statusClass = getStatusClass(pear.status);
@@ -1229,6 +1272,7 @@
                             pearList.push(pear);
                         });
                         
+                        console.log(`Loaded ${pearList.length} PEAR records from incident: ${incident.id}`);
                         return pearList;
                     } catch (error) {
                         console.error(`Error loading PEAR for incident ${incident.id}:`, error);
@@ -1245,7 +1289,10 @@
                 
                 console.log(`Total PEAR records loaded: ${allPEARData.length}`);
                 
-                filterDataByDate();
+                // Sort by newest first by default
+                allPEARData.sort((a, b) => (b.timestampValue || 0) - (a.timestampValue || 0));
+                
+                filterDataByViewMode();
                 
                 return true;
                 
@@ -1256,28 +1303,58 @@
             }
         }
 
-        // Filter data based on date mode
-        function filterDataByDate() {
+        // Filter data based on view mode - FIXED VERSION
+        function filterDataByViewMode() {
+            console.log('=== FILTERING PEAR DATA ===');
+            console.log('View Mode:', viewMode);
+            console.log('Selected Date:', selectedDate);
+            console.log('Selected Incident ID:', selectedIncidentId);
+            
             // Reset filtered data
             Object.keys(filteredDataByCategory).forEach(category => {
                 filteredDataByCategory[category] = [];
             });
             
-            // Filter data by date
-            let dateFilteredData = [];
-            if (isShowingSpecificDate && selectedDate) {
-                dateFilteredData = allPEARData.filter(data => {
-                    return data.dateYMD === selectedDate;
-                });
-            } else {
+            let dataToFilter = [];
+            
+            if (viewMode === 'all') {
+                // Show ALL data (all dates, all incidents)
+                dataToFilter = [...allPEARData];
+                console.log('View: ALL - Showing all', dataToFilter.length, 'records');
+                
+            } else if (viewMode === 'today') {
+                // Show only today's data
                 const todayYMD = formatDateToYMD(new Date());
-                dateFilteredData = allPEARData.filter(data => 
+                dataToFilter = allPEARData.filter(data => 
                     data.dateYMD === todayYMD
                 );
+                console.log('View: TODAY - Showing', dataToFilter.length, 'records for', todayYMD);
+                
+            } else if (viewMode === 'specific' && selectedDate) {
+                // Show data for specific date
+                console.log('Filtering by date:', selectedDate);
+                let dateFilteredData = allPEARData.filter(data => {
+                    return data.dateYMD === selectedDate;
+                });
+                
+                console.log('Date filtered data:', dateFilteredData.length, 'records');
+                
+                // CRITICAL FIX: If incidentId is specified, filter by incidentId too
+                if (selectedIncidentId) {
+                    console.log('Filtering by incidentId:', selectedIncidentId);
+                    dataToFilter = dateFilteredData.filter(data => {
+                        return data.incidentId === selectedIncidentId;
+                    });
+                    console.log('Final filtered data with incidentId:', dataToFilter.length, 'records');
+                } else {
+                    dataToFilter = dateFilteredData;
+                    console.log('Final filtered data (date only):', dataToFilter.length, 'records');
+                }
             }
             
             // Categorize data
-            dateFilteredData.forEach(data => {
+            console.log('Categorizing', dataToFilter.length, 'records...');
+            dataToFilter.forEach(data => {
                 const categoryField = data.category || data.type || 'people';
                 const category = categoryField.toLowerCase();
                 
@@ -1294,11 +1371,24 @@
                 }
             });
             
+            console.log('Categorized data counts:', {
+                people: filteredDataByCategory.people.length,
+                environment: filteredDataByCategory.environment.length,
+                asset: filteredDataByCategory.asset.length,
+                reputation: filteredDataByCategory.reputation.length
+            });
+            
+            // Apply default sorting for each category
+            const categories = ['people', 'environment', 'asset', 'reputation'];
+            categories.forEach(category => {
+                applySorting(category, 'timestamp_desc');
+            });
+            
             // Update all record counts and display data
             updateAllRecordCounts();
             
             // Display data for all categories
-            Object.keys(filteredDataByCategory).forEach(category => {
+            categories.forEach(category => {
                 displayPEARForCategory(category);
             });
         }
@@ -1321,6 +1411,10 @@
                         return (a.status || '').localeCompare(b.status || '');
                     case 'status_desc': // Status Z-A
                         return (b.status || '').localeCompare(a.status || '');
+                    case 'date_asc': // Date Old-New
+                        return (a.fullDate || 0) - (b.fullDate || 0);
+                    case 'date_desc': // Date New-Old
+                        return (b.fullDate || 0) - (a.fullDate || 0);
                     default:
                         return (b.timestampValue || 0) - (a.timestampValue || 0);
                 }
@@ -1357,15 +1451,32 @@
             const searchResults = applySearchFilter(category);
             
             if (!searchResults || searchResults.length === 0) {
-                // Show no data message with icon and text
+                // Show no data message
+                let message = '';
+                let subMessage = '';
+                
+                if (viewMode === 'all') {
+                    message = `No ${category} records found`;
+                    subMessage = 'When admin adds PEAR records, they will appear here.';
+                } else if (viewMode === 'today') {
+                    message = `No ${category} recorded yet for today`;
+                    subMessage = 'Check back later or select a different date.';
+                } else if (viewMode === 'specific') {
+                    if (selectedIncidentId) {
+                        message = `No ${category} records found for the selected incident`;
+                        subMessage = `No ${category} records for the selected incident on ${selectedDate}.`;
+                    } else {
+                        message = `No ${category} records found`;
+                        subMessage = `No ${category} recorded for ${selectedDate}.`;
+                    }
+                }
+                    
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="4" class="no-data-message">
                             <i class="fas fa-inbox"></i>
-                            <h4>No ${category} records found</h4>
-                            <p>${isShowingSpecificDate 
-                                ? `No ${category} records for ${selectedDate}.` 
-                                : `No ${category} recorded yet for today.`}</p>
+                            <h4>${message}</h4>
+                            <p>${subMessage}</p>
                         </td>
                     </tr>
                 `;
@@ -1382,18 +1493,15 @@
             tbody.innerHTML = '';
             
             // Add each record as a row
-            filteredDataByCategory[category].forEach(data => {
+            filteredDataByCategory[category].forEach((data, index) => {
                 const row = document.createElement('tr');
                 
-                // Check if this is the selected incident
-                const isSelectedIncident = selectedIncidentId && data.incidentId === selectedIncidentId;
-                
-                // Add highlight class for selected incident
-                if (isSelectedIncident) {
+                // CRITICAL FIX: Highlight jika incident yang dipilih
+                if (selectedIncidentId && data.incidentId === selectedIncidentId) {
                     row.classList.add('highlighted');
                 }
                 
-                // TIMESTAMP CELL - TARIKH DAN MASA
+                // TIMESTAMP CELL
                 const timestampCell = document.createElement('td');
                 timestampCell.className = 'timestamp-cell';
                 
@@ -1403,14 +1511,14 @@
                 if (data.incidentName) {
                     timestampHTML += `<div class="incident-source">From: ${data.incidentName}</div>`;
                     
-                    if (isSelectedIncident) {
-                        timestampHTML += `<div class="selected-tag">Your Selected Incident</div>`;
+                    if (selectedIncidentId && data.incidentId === selectedIncidentId) {
+                        timestampHTML += `<div class="selected-tag">Selected Incident</div>`;
                     }
                 }
                 
                 timestampCell.innerHTML = timestampHTML;
                 
-                // REPORTED BY CELL - NAMA
+                // REPORTED BY CELL
                 const nameCell = document.createElement('td');
                 nameCell.className = 'name-cell';
                 nameCell.textContent = data.name || 'Unknown';
@@ -1435,11 +1543,18 @@
                 // Append row to table
                 tbody.appendChild(row);
             });
+            
+            // Log highlighted rows count
+            const highlightedRows = document.querySelectorAll(`#${category}TableBody tr.highlighted`);
+            if (highlightedRows.length > 0) {
+                console.log(`${highlightedRows.length} rows highlighted in ${category} table`);
+            }
         }
 
         // Update record count for all categories
         function updateAllRecordCounts() {
-            Object.keys(filteredDataByCategory).forEach(category => {
+            const categories = ['people', 'environment', 'asset', 'reputation'];
+            categories.forEach(category => {
                 updateRecordCount(category);
             });
         }
@@ -1455,10 +1570,43 @@
             
             let countText = '';
             
-            if (searchTerm && filteredRecords !== totalRecords) {
-                countText = `${filteredRecords} of ${totalRecords} records`;
-            } else {
-                countText = `${totalRecords} records`;
+            if (viewMode === 'all') {
+                if (searchTerm && filteredRecords !== totalRecords) {
+                    countText = `${filteredRecords} of ${totalRecords} records`;
+                } else {
+                    countText = `${totalRecords} records`;
+                }
+            } else if (viewMode === 'today') {
+                const todayYMD = formatDateToYMD(new Date());
+                const todayRecords = allPEARData.filter(d => d.dateYMD === todayYMD && 
+                    (d.category?.toLowerCase().includes(category) || d.type?.toLowerCase().includes(category))).length;
+                
+                if (searchTerm) {
+                    countText = `${filteredRecords} of ${todayRecords} today's ${category} records`;
+                } else {
+                    countText = `${totalRecords} of ${todayRecords} today's ${category} records`;
+                }
+            } else if (viewMode === 'specific') {
+                const dateRecords = allPEARData.filter(d => d.dateYMD === selectedDate && 
+                    (d.category?.toLowerCase().includes(category) || d.type?.toLowerCase().includes(category))).length;
+                
+                if (selectedIncidentId) {
+                    const incidentRecords = allPEARData.filter(d => 
+                        d.dateYMD === selectedDate && d.incidentId === selectedIncidentId &&
+                        (d.category?.toLowerCase().includes(category) || d.type?.toLowerCase().includes(category))).length;
+                    
+                    if (searchTerm) {
+                        countText = `${filteredRecords} of ${incidentRecords} ${category} from selected incident`;
+                    } else {
+                        countText = `${totalRecords} of ${incidentRecords} ${category} from selected incident`;
+                    }
+                } else {
+                    if (searchTerm) {
+                        countText = `${filteredRecords} of ${dateRecords} ${category} records for selected date`;
+                    } else {
+                        countText = `${totalRecords} of ${dateRecords} ${category} records for selected date`;
+                    }
+                }
             }
             
             const recordCountElement = document.getElementById(`${category}RecordCount`);
@@ -1473,10 +1621,10 @@
             updateRecordCount(category);
         }
 
-        // Show today's data
-        function showTodayData() {
-            const today = new Date();
-            selectedDate = formatDateToYMD(today);
+        // Show ALL data (default view)
+        function showAllData() {
+            viewMode = 'all';
+            selectedDate = null;
             selectedIncidentId = null;
             isShowingSpecificDate = false;
             
@@ -1484,14 +1632,29 @@
             localStorage.removeItem('selectedIncidentId');
             
             updateDateDisplay();
-            filterDataByDate();
+            filterDataByViewMode();
+        }
+
+        // Show today's data
+        function showTodayData() {
+            const today = new Date();
+            selectedDate = formatDateToYMD(today);
+            selectedIncidentId = null;
+            isShowingSpecificDate = false;
+            viewMode = 'today';
+            
+            localStorage.removeItem('selectedDate');
+            localStorage.removeItem('selectedIncidentId');
+            
+            updateDateDisplay();
+            filterDataByViewMode();
         }
 
         // Show specific date data
         function showSpecificDateData() {
-            isShowingSpecificDate = true;
+            viewMode = 'specific';
             updateDateDisplay();
-            filterDataByDate();
+            filterDataByViewMode();
         }
 
         // Show no data error for all tables
@@ -1541,6 +1704,8 @@
 
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== PEAR PAGE INITIALIZATION ===');
+            
             checkForSpecificDate();
             updateDateDisplay();
             loadAllPEARData();
@@ -1559,6 +1724,7 @@
                 }
             });
             
+            // Auto-refresh every 30 seconds
             setInterval(() => {
                 refreshAllPEAR();
             }, 30000);
