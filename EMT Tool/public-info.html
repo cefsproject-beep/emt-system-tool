@@ -1486,22 +1486,157 @@
             loadIncidentData(1);
         }
 
-        // View Chronology details
+        // View Chronology details - FIXED VERSION
         function viewChronology(incidentId) {
-            localStorage.setItem('currentIncidentId', incidentId);
-            window.location.href = "public-chronology.html";
+            console.log('🚀 viewChronology called for incident:', incidentId);
+            
+            // Get incident date from current incident data
+            if (currentIncidentData && currentIncidentData.createdAt) {
+                try {
+                    const incidentDate = currentIncidentData.createdAt.toDate();
+                    
+                    // Format date to YYYY-MM-DD
+                    const year = incidentDate.getFullYear();
+                    const month = String(incidentDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(incidentDate.getDate()).padStart(2, '0');
+                    const dateYMD = `${year}-${month}-${day}`;
+                    
+                    console.log('📅 Incident Date for Chronology:', dateYMD);
+                    
+                    // Clear any old data first
+                    localStorage.removeItem('selectedDate');
+                    localStorage.removeItem('selectedIncidentId');
+                    
+                    // Save to localStorage
+                    localStorage.setItem('selectedDate', dateYMD);
+                    localStorage.setItem('selectedIncidentId', incidentId);
+                    
+                    console.log('💾 Saved to localStorage for Chronology:', {
+                        date: dateYMD,
+                        incidentId: incidentId
+                    });
+                    
+                    // Redirect with URL parameters
+                    window.location.href = `public-chronology.html?date=${dateYMD}&incidentId=${incidentId}`;
+                    
+                } catch (error) {
+                    console.error('Error getting incident date for Chronology:', error);
+                    // Fallback to just incidentId
+                    localStorage.removeItem('selectedDate');
+                    localStorage.removeItem('selectedIncidentId');
+                    localStorage.setItem('selectedIncidentId', incidentId);
+                    window.location.href = `public-chronology.html?incidentId=${incidentId}`;
+                }
+            } else {
+                // Fallback if no date available
+                console.warn('No incident date available for Chronology, using fallback');
+                localStorage.removeItem('selectedDate');
+                localStorage.removeItem('selectedIncidentId');
+                localStorage.setItem('selectedIncidentId', incidentId);
+                window.location.href = `public-chronology.html?incidentId=${incidentId}`;
+            }
         }
 
-        // View IP Status details
+        // View IP Status details - FIXED VERSION
         function viewIPStatus(incidentId) {
-            localStorage.setItem('currentIncidentId', incidentId);
-            window.location.href = "public-ip.html";
+            console.log('🚀 viewIPStatus called for incident:', incidentId);
+            
+            // Get incident date from current incident data
+            if (currentIncidentData && currentIncidentData.createdAt) {
+                try {
+                    const incidentDate = currentIncidentData.createdAt.toDate();
+                    
+                    // Format date to YYYY-MM-DD
+                    const year = incidentDate.getFullYear();
+                    const month = String(incidentDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(incidentDate.getDate()).padStart(2, '0');
+                    const dateYMD = `${year}-${month}-${day}`;
+                    
+                    console.log('📅 Incident Date for IP Status:', dateYMD);
+                    
+                    // Clear any old data first
+                    localStorage.removeItem('selectedDate');
+                    localStorage.removeItem('selectedIncidentId');
+                    
+                    // Save to localStorage
+                    localStorage.setItem('selectedDate', dateYMD);
+                    localStorage.setItem('selectedIncidentId', incidentId);
+                    
+                    console.log('💾 Saved to localStorage for IP Status:', {
+                        date: dateYMD,
+                        incidentId: incidentId
+                    });
+                    
+                    // Redirect with URL parameters
+                    window.location.href = `public-ip.html?date=${dateYMD}&incidentId=${incidentId}`;
+                    
+                } catch (error) {
+                    console.error('Error getting incident date for IP Status:', error);
+                    // Fallback to just incidentId
+                    localStorage.removeItem('selectedDate');
+                    localStorage.removeItem('selectedIncidentId');
+                    localStorage.setItem('selectedIncidentId', incidentId);
+                    window.location.href = `public-ip.html?incidentId=${incidentId}`;
+                }
+            } else {
+                // Fallback if no date available
+                console.warn('No incident date available for IP Status, using fallback');
+                localStorage.removeItem('selectedDate');
+                localStorage.removeItem('selectedIncidentId');
+                localStorage.setItem('selectedIncidentId', incidentId);
+                window.location.href = `public-ip.html?incidentId=${incidentId}`;
+            }
         }
 
-        // View PEAR details
+        // View PEAR details - FIXED VERSION
         function viewPear(incidentId) {
-            localStorage.setItem('currentIncidentId', incidentId);
-            window.location.href = "public-pear.html";
+            console.log('🚀 viewPear called for incident:', incidentId);
+            
+            // Get incident date from current incident data
+            if (currentIncidentData && currentIncidentData.createdAt) {
+                try {
+                    const incidentDate = currentIncidentData.createdAt.toDate();
+                    
+                    // Format date to YYYY-MM-DD
+                    const year = incidentDate.getFullYear();
+                    const month = String(incidentDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(incidentDate.getDate()).padStart(2, '0');
+                    const dateYMD = `${year}-${month}-${day}`;
+                    
+                    console.log('📅 Incident Date for PEAR:', dateYMD);
+                    
+                    // Clear any old data first
+                    localStorage.removeItem('selectedDate');
+                    localStorage.removeItem('selectedIncidentId');
+                    
+                    // Save to localStorage
+                    localStorage.setItem('selectedDate', dateYMD);
+                    localStorage.setItem('selectedIncidentId', incidentId);
+                    
+                    console.log('💾 Saved to localStorage for PEAR:', {
+                        date: dateYMD,
+                        incidentId: incidentId
+                    });
+                    
+                    // Redirect with URL parameters
+                    window.location.href = `public-pear.html?date=${dateYMD}&incidentId=${incidentId}`;
+                    
+                } catch (error) {
+                    console.error('Error getting incident date for PEAR:', error);
+                    // Fallback to just incidentId
+                    localStorage.removeItem('selectedDate');
+                    localStorage.removeItem('selectedIncidentId');
+                    localStorage.setItem('selectedIncidentId', incidentId);
+                    window.location.href = `public-pear.html?incidentId=${incidentId}`;
+                }
+            } else {
+                // Fallback if no date available
+                console.warn('No incident date available for PEAR, using fallback');
+                localStorage.removeItem('selectedDate');
+                localStorage.removeItem('selectedIncidentId');
+                localStorage.setItem('selectedIncidentId', incidentId);
+                window.location.href = `public-pear.html?incidentId=${incidentId}`;
+            }
         }
 
         // Display no data message
@@ -1892,61 +2027,10 @@
         }
 
         // Initialize the page
-document.addEventListener('DOMContentLoaded', function() {
-    checkPublicAccess();
-    loadIncidentData(1);
-});
-    // View Chronology details - FIXED VERSION
-function viewChronology(incidentId) {
-    console.log('🚀 viewChronology called for incident:', incidentId);
-    
-    // Get incident date from current incident data
-    if (currentIncidentData && currentIncidentData.createdAt) {
-        try {
-            const incidentDate = currentIncidentData.createdAt.toDate();
-            
-            // Format date to YYYY-MM-DD
-            const year = incidentDate.getFullYear();
-            const month = String(incidentDate.getMonth() + 1).padStart(2, '0');
-            const day = String(incidentDate.getDate()).padStart(2, '0');
-            const dateYMD = `${year}-${month}-${day}`;
-            
-            console.log('📅 Incident Date:', dateYMD);
-            console.log('📊 Incident Data:', currentIncidentData);
-            
-            // Clear any old data first
-            localStorage.removeItem('selectedDate');
-            localStorage.removeItem('selectedIncidentId');
-            
-            // Save to localStorage
-            localStorage.setItem('selectedDate', dateYMD);
-            localStorage.setItem('selectedIncidentId', incidentId);
-            
-            console.log('💾 Saved to localStorage:', {
-                date: dateYMD,
-                incidentId: incidentId
-            });
-            
-            // Redirect with URL parameters
-            window.location.href = `public-chronology.html?date=${dateYMD}&incidentId=${incidentId}`;
-            
-        } catch (error) {
-            console.error('Error getting incident date:', error);
-            // Fallback to just incidentId
-            localStorage.removeItem('selectedDate');
-            localStorage.removeItem('selectedIncidentId');
-            localStorage.setItem('selectedIncidentId', incidentId);
-            window.location.href = `public-chronology.html?incidentId=${incidentId}`;
-        }
-    } else {
-        // Fallback if no date available
-        console.warn('No incident date available, using fallback');
-        localStorage.removeItem('selectedDate');
-        localStorage.removeItem('selectedIncidentId');
-        localStorage.setItem('selectedIncidentId', incidentId);
-        window.location.href = `public-chronology.html?incidentId=${incidentId}`;
-    }
-}
+        document.addEventListener('DOMContentLoaded', function() {
+            checkPublicAccess();
+            loadIncidentData(1);
+        });
     </script>
 </body>
 </html>
